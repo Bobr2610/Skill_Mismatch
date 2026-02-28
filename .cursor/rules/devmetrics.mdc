@@ -1,0 +1,77 @@
+---
+description: DevMetrics project rules, structure, and commands
+alwaysApply: true
+---
+
+# DevMetrics — Project Rules
+
+## Tech Stack
+
+- **Backend**: Python Flask, SQLite
+- **Frontend**: Vanilla JS, Tailwind CSS, no build step
+- **AI**: OpenRouter (GLM 4.5 Air) for activity stats
+
+## Commands (Primary: Docker)
+
+### Start with Docker
+```powershell
+docker compose up -d
+```
+Then open **http://localhost:5000**
+
+### Stop Docker
+```powershell
+docker compose down
+```
+
+### Rebuild and run
+```powershell
+docker compose up -d --build
+```
+
+### View logs
+```powershell
+docker compose logs -f
+```
+
+---
+
+## Native Run (Legacy / Dev)
+
+### Start server
+```powershell
+cd backend
+.\start.ps1
+```
+Or CMD: `cd backend` then `start.bat`
+
+### Stop server
+```powershell
+cd backend
+.\stop.ps1
+```
+Or CMD: `stop.bat`
+
+### Manual run
+```powershell
+cd backend
+pip install -r requirements.txt
+python app.py
+```
+Then open **http://localhost:5000**
+
+---
+
+## Structure
+
+- `backend/` — Flask API, db.py, ai.py
+- `assets/js/` — api.js, charts.js, pages.js, config/
+- `pages/` — HTML pages (dashboard, profile, comparison, team)
+- `.env` — `Openrouter_API_Key` for AI stats (required for Docker)
+- `Dockerfile`, `docker-compose.yml` — container setup
+
+## Conventions
+
+- API base: `/api/`
+- Employee stats: 6 params (productivity, quality, collaboration, reliability, initiative, expertise)
+- Use `activity_stats` / `activity_summary`, not heatmaps or full commit history

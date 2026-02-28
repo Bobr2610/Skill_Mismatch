@@ -1,0 +1,40 @@
+/**
+ * Base styles & reset
+ * Employee Evaluation Platform
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap');
+
+@import 'variables.css';
+@import 'layout.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-display);
+  margin: 0;
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* Contribution grid (GitHub-style activity map) */
+.contribution-grid {
+  display: grid;
+  grid-template-columns: repeat(52, 1fr);
+  gap: 2px;
+}
+
+.contribution-cell {
+  aspect-ratio: 1 / 1;
+  border-radius: 2px;
+}

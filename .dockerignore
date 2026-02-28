@@ -1,0 +1,11 @@
+.git
+.gitignore
+.env.example
+*.md
+.cursor
+__pycache__
+*.pyc
+*.db
+.venv
+venv
+node_modules

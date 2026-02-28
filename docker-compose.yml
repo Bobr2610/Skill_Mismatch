@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - DB_PATH=/data/devmetrics.db
+    volumes:
+      - devmetrics_db:/data
+    restart: unless-stopped
+
+volumes:
+  devmetrics_db:

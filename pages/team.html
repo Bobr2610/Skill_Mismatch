@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="team.page_title">Engineering Team - DevMetrics</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="../assets/css/base.css">
+  <script src="../assets/js/config/theme.js"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": (typeof THEME !== 'undefined' && THEME?.colors?.primary) || "#135bec",
+            "background-light": (typeof THEME !== 'undefined' && THEME?.colors?.backgroundLight) || "#f6f6f8",
+            "background-dark": (typeof THEME !== 'undefined' && THEME?.colors?.backgroundDark) || "#101622",
+          },
+          fontFamily: { "display": ["Inter", "sans-serif"] },
+          borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+  <div class="flex h-screen overflow-hidden">
+    <aside class="w-64 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark shrink-0">
+      <div class="p-6 flex items-center gap-3">
+        <div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white"><span class="material-symbols-outlined">analytics</span></div>
+        <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white" data-i18n="brand.prodengine">ProdEngine</h1>
+      </div>
+      <nav class="flex-1 px-4 space-y-1">
+        <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <span class="material-symbols-outlined">dashboard</span>
+          <span class="text-sm font-medium" data-i18n="nav.dashboard">Dashboard</span>
+        </a>
+        <a href="team.html" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary">
+          <span class="material-symbols-outlined text-[24px]">group</span>
+          <span class="text-sm font-semibold" data-i18n="nav.team">Engineering Team</span>
+        </a>
+        <a href="comparison.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <span class="material-symbols-outlined text-[24px]">compare_arrows</span>
+          <span class="text-sm font-medium" data-i18n="nav.comparison">Comparison</span>
+        </a>
+      </nav>
+    </aside>
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <header class="app-header border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark/50 backdrop-blur-md">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white" data-i18n="team.title">Engineering Team</h2>
+        <div class="app-header-actions">
+          <button id="lang-toggle" onclick="i18n.toggle()" class="px-2.5 py-1 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">EN</button>
+          <button id="theme-toggle" class="btn-icon text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" title="Toggle theme">
+            <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+            <span class="material-symbols-outlined hidden dark:inline">light_mode</span>
+          </button>
+          <button id="add-employee-btn" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:brightness-110 transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-[20px]">person_add</span>
+            <span data-i18n="team.add">Add Employee</span>
+          </button>
+        </div>
+      </header>
+      <main class="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark/95 p-8">
+        <div class="flex items-center gap-2 mb-6">
+          <a class="text-slate-500 dark:text-slate-400 text-sm font-medium hover:text-primary" href="dashboard.html" data-i18n="nav.dashboard">Dashboard</a>
+          <span class="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+          <span class="text-primary text-sm font-semibold" data-i18n="team.title">Engineering Team</span>
+        </div>
+        <div class="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+          <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white" data-i18n="team.all_members">All Team Members</h3>
+            <a href="comparison.html" class="text-primary text-sm font-semibold hover:underline" data-i18n="team.compare">Compare Employees</a>
+          </div>
+          <div id="team-list" class="divide-y divide-slate-100 dark:divide-slate-800">
+            <div class="p-8"><div class="skeleton skeleton-block h-24"></div></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="add-employee-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white" data-i18n="team.modal_title">Add New Employee</h3>
+        <button id="close-modal-btn" class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form id="add-employee-form" class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1" data-i18n="team.field_id">ID (unique)</label>
+          <input type="text" name="id" required data-i18n-placeholder="team.placeholder_id" placeholder="e.g. john-doe" class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg border-none focus:ring-2 focus:ring-primary text-slate-900 dark:text-slate-100">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1" data-i18n="team.field_name">Name</label>
+          <input type="text" name="name" required data-i18n-placeholder="team.placeholder_name" placeholder="Full name" class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg border-none focus:ring-2 focus:ring-primary text-slate-900 dark:text-slate-100">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1" data-i18n="team.field_title">Title</label>
+          <input type="text" name="title" data-i18n-placeholder="team.placeholder_title" placeholder="e.g. Senior Engineer" class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg border-none focus:ring-2 focus:ring-primary text-slate-900 dark:text-slate-100">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1" data-i18n="team.field_role">Role</label>
+          <select name="role" class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg border-none focus:ring-2 focus:ring-primary text-slate-900 dark:text-slate-100">
+            <option value="Staff" data-i18n="role.staff">Staff</option>
+            <option value="Senior" data-i18n="role.senior">Senior</option>
+            <option value="Mid" selected data-i18n="role.mid">Mid</option>
+            <option value="Junior" data-i18n="role.junior">Junior</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1" data-i18n="team.field_email">Email</label>
+          <input type="email" name="email" data-i18n-placeholder="team.placeholder_email" placeholder="email@company.com" class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg border-none focus:ring-2 focus:ring-primary text-slate-900 dark:text-slate-100">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1" data-i18n="team.field_location">Location</label>
+          <input type="text" name="location" data-i18n-placeholder="team.placeholder_location" placeholder="City, Country" class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg border-none focus:ring-2 focus:ring-primary text-slate-900 dark:text-slate-100">
+        </div>
+        <div id="form-error" class="text-red-500 text-sm hidden"></div>
+        <div class="flex gap-3 pt-4">
+          <button type="submit" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:brightness-110 transition-all" data-i18n="team.btn_add">Add Employee</button>
+          <button type="button" id="cancel-btn" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" data-i18n="team.btn_cancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../assets/js/config/theme.js"></script>
+  <script src="../assets/js/storage.js"></script>
+  <script src="../assets/js/config/icons.js"></script>
+  <script src="../assets/js/config/routes.js"></script>
+  <script src="../assets/js/config/index.js"></script>
+  <script src="../assets/js/i18n.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const teamList = document.getElementById('team-list');
+      const modal = document.getElementById('add-employee-modal');
+      const addBtn = document.getElementById('add-employee-btn');
+      const closeBtn = document.getElementById('close-modal-btn');
+      const cancelBtn = document.getElementById('cancel-btn');
+      const form = document.getElementById('add-employee-form');
+      const formError = document.getElementById('form-error');
+
+      async function loadTeam() {
+        try {
+          const employees = await API.getEmployees();
+          if (!employees?.length) {
+            teamList.innerHTML = `<p class="p-8 text-center text-slate-500 dark:text-slate-400">${i18n.t('team.no_employees')}</p>`;
+            return;
+          }
+          teamList.innerHTML = employees
+            .sort((a, b) => (b.impactScore || 0) - (a.impactScore || 0))
+            .map((e) => `
+            <div class="flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+              <a href="profile.html?id=${e.id}" class="flex items-center gap-4 flex-1 min-w-0">
+                <div class="size-12 rounded-full bg-slate-200 dark:bg-slate-700 bg-cover shrink-0" style="background-image: url('${e.avatar || ''}')"></div>
+                <div class="min-w-0">
+                  <p class="font-semibold text-slate-900 dark:text-white truncate">${e.name}</p>
+                  <p class="text-sm text-slate-500 dark:text-slate-400 truncate">${e.title || ''} • ${e.role || ''}</p>
+                </div>
+              </a>
+              <div class="flex items-center gap-4 shrink-0">
+                <span class="text-sm text-slate-500">${e.commits ?? 0} ${i18n.t('team.commits')}</span>
+                <span class="text-sm font-medium text-primary">${e.impactScore ?? 0}% ${i18n.t('team.impact')}</span>
+                <a href="comparison.html?id1=${e.id}" class="text-primary text-sm font-medium hover:underline">${i18n.t('team.compare_link')}</a>
+              </div>
+            </div>
+          `).join('');
+        } catch (err) {
+          teamList.innerHTML = `<p class="p-8 text-center text-red-500">${err.message}</p>`;
+        }
+      }
+
+      addBtn.addEventListener('click', () => {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      });
+      closeBtn.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      });
+      cancelBtn.addEventListener('click', () => closeBtn.click());
+      modal.addEventListener('click', (e) => { if (e.target === modal) closeBtn.click(); });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        formError.classList.add('hidden');
+        const data = {
+          id: form.id.value.trim().toLowerCase().replace(/\s+/g, '-'),
+          name: form.name.value.trim(),
+          title: form.title.value.trim() || 'Engineer',
+          role: form.role.value,
+          email: form.email.value.trim() || '',
+          location: form.location.value.trim() || 'Remote',
+        };
+        try {
+          await API.createEmployee(data);
+          form.reset();
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+          loadTeam();
+        } catch (err) {
+          formError.textContent = err.message;
+          formError.classList.remove('hidden');
+        }
+      });
+
+      loadTeam();
+    });
+  </script>
+</body>
+</html>

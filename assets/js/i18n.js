@@ -1,0 +1,296 @@
+/**
+ * Internationalization module — single source of truth for all UI strings
+ * Supports: English (en), Russian (ru)
+ */
+
+const I18N_DICT = {
+  en: {
+    'brand.devmetrics': 'DevMetrics',
+    'brand.prodengine': 'ProdEngine',
+
+    'nav.dashboard': 'Dashboard',
+    'nav.team': 'Engineering Team',
+    'nav.comparison': 'Comparison',
+    'nav.projects': 'Projects',
+    'nav.analytics': 'Analytics',
+    'nav.teams': 'Teams',
+    'nav.settings': 'Settings',
+
+    'dashboard.page_title': 'Team Productivity Dashboard - DevMetrics',
+    'dashboard.title': 'Team Productivity Overview',
+    'dashboard.search': 'Search across repositories...',
+    'dashboard.period': 'Last 30 Days',
+    'dashboard.total_commits': 'Total Commits',
+    'dashboard.active_prs': 'Active PRs',
+    'dashboard.avg_cycle': 'Avg. Cycle Time',
+    'dashboard.deploy_freq': 'Deployment Freq.',
+    'dashboard.commits_chart': 'Commits over Time',
+    'dashboard.chart_desc': 'Aggregated team activity for the current month',
+    'dashboard.btn_commits': 'Commits',
+    'dashboard.btn_releases': 'Releases',
+    'dashboard.top_contributors': 'Top Contributors',
+    'dashboard.view_all': 'View All',
+    'dashboard.th_engineer': 'Engineer',
+    'dashboard.th_commits': 'Commits',
+    'dashboard.th_prs': 'PRs Active',
+    'dashboard.th_impact': 'Impact Score',
+    'dashboard.recent_activity': 'Recent Activity',
+    'dashboard.load_more': 'Load More Activity',
+
+    'profile.page_title': 'Developer Profile Analytics - DevMetrics',
+    'profile.search': 'Search developer...',
+    'profile.breadcrumb_eng': 'Engineering',
+    'profile.export': 'Export Report',
+    'profile.message': 'Send Message',
+    'profile.avg_commits': 'Avg. Commits / Day',
+    'profile.code_review': 'Code Review Participation',
+    'profile.bugs_resolved': 'Bugs Resolved (Monthly)',
+    'profile.activity_stats': 'Activity Stats',
+    'profile.activity_desc': '6 parameters computed by AI from activity (like in a game)',
+    'profile.recent_activity': 'Recent Activity',
+    'profile.ai_title': 'AI Career Recommendation',
+    'profile.ai_desc': 'Based on 6 stats and position: promote, demote, or keep',
+    'profile.get_rec': 'Get Recommendation',
+    'profile.stats_summary': 'Stats Summary',
+    'profile.tech_stack': 'Core Technology Stack',
+    'profile.collaborators': 'Top Collaborators',
+    'profile.no_activity': 'No recent activity. Click "Refresh via AI" to recompute stats.',
+
+    'stats.productivity': 'Productivity',
+    'stats.quality': 'Quality',
+    'stats.collaboration': 'Collaboration',
+    'stats.reliability': 'Reliability',
+    'stats.initiative': 'Initiative',
+    'stats.expertise': 'Expertise',
+
+    'comparison.page_title': 'Employee Comparison - DevMetrics',
+    'comparison.title': 'Employee Comparison',
+    'comparison.desc': 'Compare performance metrics across team members.',
+    'comparison.first': 'First employee',
+    'comparison.second': 'Second employee',
+    'comparison.select': 'Select employee...',
+    'comparison.prompt': 'Select two employees above to compare their metrics.',
+    'comparison.overlapping': 'Activity Stats (overlapping)',
+    'comparison.th_metric': 'Metric',
+    'comparison.th_winner': 'Winner',
+    'comparison.tie': 'Tie',
+    'comparison.commits_30d': 'Commits (30d)',
+    'comparison.avg_commits_day': 'Avg Commits/Day',
+    'comparison.active_prs': 'Active PRs',
+    'comparison.impact_score': 'Impact Score',
+    'comparison.code_review': 'Code Review %',
+    'comparison.bugs_resolved': 'Bugs Resolved',
+    'comparison.productivity_ai': 'Productivity (AI)',
+    'comparison.quality_ai': 'Quality (AI)',
+    'comparison.expertise_ai': 'Expertise (AI)',
+
+    'team.page_title': 'Engineering Team - DevMetrics',
+    'team.title': 'Engineering Team',
+    'team.add': 'Add Employee',
+    'team.all_members': 'All Team Members',
+    'team.compare': 'Compare Employees',
+    'team.modal_title': 'Add New Employee',
+    'team.field_id': 'ID (unique)',
+    'team.field_name': 'Name',
+    'team.field_title': 'Title',
+    'team.field_role': 'Role',
+    'team.field_email': 'Email',
+    'team.field_location': 'Location',
+    'team.btn_add': 'Add Employee',
+    'team.btn_cancel': 'Cancel',
+    'team.no_employees': 'No employees yet. Click "Add Employee" to get started.',
+    'team.commits': 'commits',
+    'team.impact': 'impact',
+    'team.compare_link': 'Compare',
+    'team.placeholder_id': 'e.g. john-doe',
+    'team.placeholder_name': 'Full name',
+    'team.placeholder_title': 'e.g. Senior Engineer',
+    'team.placeholder_email': 'email@company.com',
+    'team.placeholder_location': 'City, Country',
+
+    'activity.committed_to': 'committed to',
+    'activity.requested_review': 'requested review',
+    'activity.merged_hotfix': 'merged hotfix',
+    'activity.triggered_deploy': 'triggered deployment',
+
+    'rec.promote': '↑ Promote',
+    'rec.demote': '↓ Demote',
+    'rec.keep': '— Keep in place',
+    'rec.analyzing': 'Analyzing...',
+    'rec.error': 'Error',
+    'rec.error_msg': 'Failed to get recommendation. Check Openrouter_API_Key in .env',
+
+    'common.loading': 'Loading...',
+    'common.error_backend': 'Backend unavailable. Start the server: cd backend && python app.py',
+    'common.pr_reviews': 'PR reviews',
+
+    'role.staff': 'Staff',
+    'role.senior': 'Senior',
+    'role.mid': 'Mid',
+    'role.junior': 'Junior',
+  },
+
+  ru: {
+    'brand.devmetrics': 'DevMetrics',
+    'brand.prodengine': 'ProdEngine',
+
+    'nav.dashboard': 'Дашборд',
+    'nav.team': 'Команда',
+    'nav.comparison': 'Сравнение',
+    'nav.projects': 'Проекты',
+    'nav.analytics': 'Аналитика',
+    'nav.teams': 'Команды',
+    'nav.settings': 'Настройки',
+
+    'dashboard.page_title': 'Дашборд продуктивности — DevMetrics',
+    'dashboard.title': 'Обзор продуктивности команды',
+    'dashboard.search': 'Поиск по репозиториям...',
+    'dashboard.period': 'Последние 30 дней',
+    'dashboard.total_commits': 'Всего коммитов',
+    'dashboard.active_prs': 'Активные PR',
+    'dashboard.avg_cycle': 'Среднее время цикла',
+    'dashboard.deploy_freq': 'Частота деплоя',
+    'dashboard.commits_chart': 'Коммиты за период',
+    'dashboard.chart_desc': 'Суммарная активность команды за текущий месяц',
+    'dashboard.btn_commits': 'Коммиты',
+    'dashboard.btn_releases': 'Релизы',
+    'dashboard.top_contributors': 'Лучшие контрибьюторы',
+    'dashboard.view_all': 'Все',
+    'dashboard.th_engineer': 'Инженер',
+    'dashboard.th_commits': 'Коммиты',
+    'dashboard.th_prs': 'Активные PR',
+    'dashboard.th_impact': 'Влияние',
+    'dashboard.recent_activity': 'Последняя активность',
+    'dashboard.load_more': 'Загрузить ещё',
+
+    'profile.page_title': 'Профиль разработчика — DevMetrics',
+    'profile.search': 'Поиск разработчика...',
+    'profile.breadcrumb_eng': 'Инженерия',
+    'profile.export': 'Экспорт отчёта',
+    'profile.message': 'Написать',
+    'profile.avg_commits': 'Коммитов / день',
+    'profile.code_review': 'Участие в код-ревью',
+    'profile.bugs_resolved': 'Баги исправлены (месяц)',
+    'profile.activity_stats': 'Статистика активности',
+    'profile.activity_desc': '6 параметров, вычисленных ИИ на основе активности (как в игре)',
+    'profile.recent_activity': 'Последняя активность',
+    'profile.ai_title': 'ИИ-рекомендация по карьере',
+    'profile.ai_desc': 'На основе 6 параметров и позиции: повысить, понизить или оставить',
+    'profile.get_rec': 'Получить рекомендацию',
+    'profile.stats_summary': 'Сводка параметров',
+    'profile.tech_stack': 'Технологический стек',
+    'profile.collaborators': 'Основные коллеги',
+    'profile.no_activity': 'Нет активности. Нажмите «Обновить через ИИ» для пересчёта.',
+
+    'stats.productivity': 'Продуктивность',
+    'stats.quality': 'Качество',
+    'stats.collaboration': 'Командная работа',
+    'stats.reliability': 'Надёжность',
+    'stats.initiative': 'Инициативность',
+    'stats.expertise': 'Экспертиза',
+
+    'comparison.page_title': 'Сравнение сотрудников — DevMetrics',
+    'comparison.title': 'Сравнение сотрудников',
+    'comparison.desc': 'Сравнение метрик производительности сотрудников.',
+    'comparison.first': 'Первый сотрудник',
+    'comparison.second': 'Второй сотрудник',
+    'comparison.select': 'Выберите сотрудника...',
+    'comparison.prompt': 'Выберите двух сотрудников для сравнения метрик.',
+    'comparison.overlapping': 'Статистика активности (наложение)',
+    'comparison.th_metric': 'Метрика',
+    'comparison.th_winner': 'Лидер',
+    'comparison.tie': 'Ничья',
+    'comparison.commits_30d': 'Коммиты (30 дн.)',
+    'comparison.avg_commits_day': 'Коммитов/день',
+    'comparison.active_prs': 'Активные PR',
+    'comparison.impact_score': 'Влияние',
+    'comparison.code_review': 'Код-ревью %',
+    'comparison.bugs_resolved': 'Баги исправлены',
+    'comparison.productivity_ai': 'Продуктивность (ИИ)',
+    'comparison.quality_ai': 'Качество (ИИ)',
+    'comparison.expertise_ai': 'Экспертиза (ИИ)',
+
+    'team.page_title': 'Команда — DevMetrics',
+    'team.title': 'Команда',
+    'team.add': 'Добавить сотрудника',
+    'team.all_members': 'Все участники',
+    'team.compare': 'Сравнить сотрудников',
+    'team.modal_title': 'Новый сотрудник',
+    'team.field_id': 'ID (уникальный)',
+    'team.field_name': 'Имя',
+    'team.field_title': 'Должность',
+    'team.field_role': 'Роль',
+    'team.field_email': 'Email',
+    'team.field_location': 'Локация',
+    'team.btn_add': 'Добавить',
+    'team.btn_cancel': 'Отмена',
+    'team.no_employees': 'Сотрудников пока нет. Нажмите «Добавить сотрудника».',
+    'team.commits': 'коммитов',
+    'team.impact': 'влияние',
+    'team.compare_link': 'Сравнить',
+    'team.placeholder_id': 'например: john-doe',
+    'team.placeholder_name': 'Полное имя',
+    'team.placeholder_title': 'например: Senior Engineer',
+    'team.placeholder_email': 'email@company.com',
+    'team.placeholder_location': 'Город, Страна',
+
+    'activity.committed_to': 'закоммитил(а) в',
+    'activity.requested_review': 'запросил(а) ревью',
+    'activity.merged_hotfix': 'влил(а) хотфикс',
+    'activity.triggered_deploy': 'запустил(а) деплой',
+
+    'rec.promote': '↑ Повысить',
+    'rec.demote': '↓ Понизить',
+    'rec.keep': '— Оставить на месте',
+    'rec.analyzing': 'Анализ...',
+    'rec.error': 'Ошибка',
+    'rec.error_msg': 'Не удалось получить рекомендацию. Проверьте Openrouter_API_Key в .env',
+
+    'common.loading': 'Загрузка...',
+    'common.error_backend': 'Бэкенд недоступен. Запустите сервер: cd backend && python app.py',
+    'common.pr_reviews': 'PR-ревью',
+
+    'role.staff': 'Staff',
+    'role.senior': 'Senior',
+    'role.mid': 'Mid',
+    'role.junior': 'Junior',
+  },
+};
+
+const i18n = {
+  _lang: localStorage.getItem('lang') || 'en',
+
+  get lang() { return this._lang; },
+
+  t(key) {
+    return I18N_DICT[this._lang]?.[key] ?? I18N_DICT.en?.[key] ?? key;
+  },
+
+  setLang(lang) {
+    if (!I18N_DICT[lang]) return;
+    this._lang = lang;
+    localStorage.setItem('lang', lang);
+    location.reload();
+  },
+
+  toggle() {
+    this.setLang(this._lang === 'en' ? 'ru' : 'en');
+  },
+
+  applyPage() {
+    document.documentElement.lang = this._lang;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      el.textContent = this.t(el.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      el.placeholder = this.t(el.dataset.i18nPlaceholder);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      el.title = this.t(el.dataset.i18nTitle);
+    });
+    const btn = document.getElementById('lang-toggle');
+    if (btn) btn.textContent = this._lang.toUpperCase();
+  },
+};
+
+document.addEventListener('DOMContentLoaded', () => i18n.applyPage());

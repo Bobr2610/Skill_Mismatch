@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="dashboard.page_title">Team Productivity Dashboard - DevMetrics</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="../assets/css/base.css">
+  <script src="../assets/js/config/theme.js"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": (typeof THEME !== 'undefined' && THEME?.colors?.primary) || "#135bec",
+            "background-light": (typeof THEME !== 'undefined' && THEME?.colors?.backgroundLight) || "#f6f6f8",
+            "background-dark": (typeof THEME !== 'undefined' && THEME?.colors?.backgroundDark) || "#101622",
+          },
+          fontFamily: { "display": (typeof THEME !== 'undefined' && THEME?.tailwind?.fontDisplay) || ["Inter", "sans-serif"] },
+          borderRadius: (typeof THEME !== 'undefined' && THEME?.tailwind?.borderRadius) || { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 transition-colors duration-200">
+  <div class="flex h-screen overflow-hidden">
+    <aside class="w-64 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark shrink-0">
+      <div class="p-6 flex items-center gap-3">
+        <div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white"><span class="material-symbols-outlined">analytics</span></div>
+        <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white" data-i18n="brand.prodengine">ProdEngine</h1>
+      </div>
+      <nav class="flex-1 px-4 space-y-1">
+        <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary">
+          <span class="material-symbols-outlined">dashboard</span>
+          <span class="text-sm font-semibold" data-i18n="nav.dashboard">Dashboard</span>
+        </a>
+        <a href="team.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <span class="material-symbols-outlined text-[24px]">group</span>
+          <span class="text-sm font-medium" data-i18n="nav.team">Engineering Team</span>
+        </a>
+        <a href="comparison.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <span class="material-symbols-outlined text-[24px]">compare_arrows</span>
+          <span class="text-sm font-medium" data-i18n="nav.comparison">Comparison</span>
+        </a>
+      </nav>
+      <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-3 p-2">
+          <div class="size-10 rounded-full bg-slate-200 dark:bg-slate-800 bg-cover bg-center" style="background-image: url('https://ui-avatars.com/api/?name=Alex+Rivera&background=135bec&color=fff')"></div>
+          <div class="flex flex-col min-w-0">
+            <span class="text-sm font-bold text-slate-900 dark:text-white truncate">Alex Rivera</span>
+            <span class="text-xs text-slate-500 dark:text-slate-400">Team Alpha Lead</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <header class="app-header border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark/50 backdrop-blur-md">
+        <div class="flex items-center gap-4 flex-1">
+          <h2 class="text-lg font-semibold text-slate-900 dark:text-white" data-i18n="dashboard.title">Team Productivity Overview</h2>
+          <div class="max-w-md flex-1">
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+              <input class="w-full pl-10 pr-4 py-1.5 bg-slate-100 dark:bg-slate-800/50 border-none rounded-lg focus:ring-2 focus:ring-primary text-sm transition-all" data-i18n-placeholder="dashboard.search" placeholder="Search across repositories..." type="text">
+            </div>
+          </div>
+        </div>
+        <div class="app-header-actions">
+          <button class="btn-icon text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span class="absolute top-1 right-1 size-2 bg-red-500 rounded-full"></span>
+          </button>
+          <button class="btn-icon text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            <span class="material-symbols-outlined">chat_bubble</span>
+          </button>
+          <div class="h-8 w-px bg-slate-200 dark:bg-slate-700"></div>
+          <button id="lang-toggle" onclick="i18n.toggle()" class="px-2.5 py-1 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">EN</button>
+          <button id="theme-toggle" class="btn-icon text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" data-i18n-title="common.toggle_theme" title="Toggle theme">
+            <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+            <span class="material-symbols-outlined hidden dark:inline">light_mode</span>
+          </button>
+          <span class="text-xs font-medium bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-600 dark:text-slate-400" data-i18n="dashboard.period">Last 30 Days</span>
+          <span class="material-symbols-outlined text-[18px] text-slate-400 cursor-pointer">calendar_today</span>
+        </div>
+      </header>
+      <main class="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark/95 p-8">
+        <div class="grid grid-cols-12 gap-6">
+          <div class="col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div class="flex justify-between items-start mb-4">
+                <span class="text-sm font-medium text-slate-500 dark:text-slate-400" data-i18n="dashboard.total_commits">Total Commits</span>
+                <span id="kpi-commits-trend" class="text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">+12.4%</span>
+              </div>
+              <div id="kpi-commits" class="text-3xl font-bold text-slate-900 dark:text-white">—</div>
+            </div>
+            <div class="bg-white dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div class="flex justify-between items-start mb-4">
+                <span class="text-sm font-medium text-slate-500 dark:text-slate-400" data-i18n="dashboard.active_prs">Active PRs</span>
+                <span id="kpi-prs-trend" class="text-xs font-bold text-slate-500 bg-slate-500/10 px-2 py-0.5 rounded-full">Stable</span>
+              </div>
+              <div id="kpi-prs" class="text-3xl font-bold text-slate-900 dark:text-white">—</div>
+            </div>
+            <div class="bg-white dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div class="flex justify-between items-start mb-4">
+                <span class="text-sm font-medium text-slate-500 dark:text-slate-400" data-i18n="dashboard.avg_cycle">Avg. Cycle Time</span>
+                <span id="kpi-cycle-trend" class="text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">-0.4 Days</span>
+              </div>
+              <div id="kpi-cycle" class="text-3xl font-bold text-slate-900 dark:text-white">—</div>
+            </div>
+            <div class="bg-white dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div class="flex justify-between items-start mb-4">
+                <span class="text-sm font-medium text-slate-500 dark:text-slate-400" data-i18n="dashboard.deploy_freq">Deployment Freq.</span>
+                <span id="kpi-deploy-trend" class="text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">+2/day</span>
+              </div>
+              <div id="kpi-deploy" class="text-3xl font-bold text-slate-900 dark:text-white">—</div>
+            </div>
+          </div>
+          <div class="col-span-12 lg:col-span-8 space-y-6">
+            <div class="bg-white dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div class="flex items-center justify-between mb-8">
+                <div>
+                  <h3 class="text-lg font-bold text-slate-900 dark:text-white" data-i18n="dashboard.commits_chart">Commits over Time</h3>
+                  <p class="text-sm text-slate-500 dark:text-slate-400" data-i18n="dashboard.chart_desc">Aggregated team activity for the current month</p>
+                </div>
+                <div class="flex gap-2">
+                  <button id="chart-btn-commits" class="px-3 py-1.5 text-xs font-semibold bg-primary text-white rounded-lg" data-i18n="dashboard.btn_commits">Commits</button>
+                  <button id="chart-btn-releases" class="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" data-i18n="dashboard.btn_releases">Releases</button>
+                </div>
+              </div>
+              <div id="commits-chart" class="h-64 w-full relative"></div>
+              <div class="flex justify-between mt-4 text-xs text-slate-400 font-medium">
+                <span>Aug 01</span><span>Aug 07</span><span>Aug 14</span><span>Aug 21</span><span>Aug 28</span><span>Sep 01</span>
+              </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+              <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white" data-i18n="dashboard.top_contributors">Top Contributors</h3>
+                <a href="team.html" class="text-primary text-sm font-semibold hover:underline" data-i18n="dashboard.view_all">View All</a>
+              </div>
+              <table class="w-full text-left">
+                <thead class="bg-slate-50 dark:bg-slate-800/80 text-xs uppercase text-slate-500 dark:text-slate-400 font-bold">
+                  <tr>
+                    <th class="px-6 py-3" data-i18n="dashboard.th_engineer">Engineer</th>
+                    <th class="px-6 py-3" data-i18n="dashboard.th_commits">Commits</th>
+                    <th class="px-6 py-3" data-i18n="dashboard.th_prs">PRs Active</th>
+                    <th class="px-6 py-3" data-i18n="dashboard.th_impact">Impact Score</th>
+                  </tr>
+                </thead>
+                <tbody id="contributors-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+                  <tr class="skeleton-row"><td colspan="4" class="px-6 py-8"><div class="skeleton skeleton-block h-32"></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="col-span-12 lg:col-span-4">
+            <div class="bg-white dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm h-full">
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6" data-i18n="dashboard.recent_activity">Recent Activity</h3>
+              <div id="recent-activity" class="space-y-6">
+                <div class="flex gap-4">
+                  <div class="relative shrink-0">
+                    <div class="size-10 rounded-full bg-slate-200 dark:bg-slate-700 bg-cover" style="background-image: url('https://ui-avatars.com/api/?name=Sarah+Chen&background=10b981&color=fff')"></div>
+                    <div class="absolute -bottom-1 -right-1 size-5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center"><span class="material-symbols-outlined text-[12px] text-white font-bold">commit</span></div>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-sm font-medium text-slate-900 dark:text-white">Sarah Chen committed to <span class="text-primary font-semibold">main</span></p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 italic">"feat: optimize data fetching hooks for dashboard widgets"</p>
+                    <p class="text-[10px] text-slate-400 mt-1">2 minutes ago</p>
+                  </div>
+                </div>
+              </div>
+              <button id="load-more-activity" class="w-full mt-8 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" data-i18n="dashboard.load_more">Load More Activity</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="../assets/js/config/theme.js"></script>
+  <script src="../assets/js/storage.js"></script>
+  <script src="../assets/js/config/icons.js"></script>
+  <script src="../assets/js/config/routes.js"></script>
+  <script src="../assets/js/config/index.js"></script>
+  <script src="../assets/js/i18n.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/charts.js"></script>
+  <script src="../assets/js/pages.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => Pages.init());</script>
+</body>
+</html>
