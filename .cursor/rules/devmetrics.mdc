@@ -105,6 +105,8 @@ Then open **http://localhost:5000**
 | GET | `/api/decay-coefficients` | Role decay coefficients |
 | POST | `/api/employees/<id>/recommendation` | AI career recommendation |
 | GET | `/api/github/contributors` | Per-contributor weekly commit stats from GitHub Stats API |
+| GET | `/api/github/activity` | Recent commits from GitHub for Recent Activity feed |
+| GET | `/api/github/kpis` | Real KPIs from GitHub (commits, PRs, cycle time, commits/day) |
 | GET | `/api/dashboard` | Dashboard data (team KPIs from DB, GitHub activity for `GITHUB_REPO`) |
 
 ---

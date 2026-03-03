@@ -39,6 +39,7 @@ const I18N_DICT = {
     'dashboard.gh_activity': 'GitHub Activity — Bobr2610/FIIT',
     'dashboard.gh_activity_desc': 'Contributions per week to main',
     'dashboard.gh_total': 'All contributions',
+    'dashboard.no_activity': 'No recent activity from GitHub. Check GITHUB_REPO and network.',
 
     'profile.page_title': 'Developer Profile Analytics - DevMetrics',
     'profile.search': 'Search developer...',
@@ -177,6 +178,7 @@ const I18N_DICT = {
     'dashboard.gh_activity': 'Активность GitHub — Bobr2610/FIIT',
     'dashboard.gh_activity_desc': 'Вклад по неделям в main',
     'dashboard.gh_total': 'Все коммиты',
+    'dashboard.no_activity': 'Нет активности с GitHub. Проверьте GITHUB_REPO и сеть.',
 
     'profile.page_title': 'Профиль разработчика — DevMetrics',
     'profile.search': 'Поиск разработчика...',

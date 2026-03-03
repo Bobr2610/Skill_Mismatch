@@ -43,13 +43,21 @@ def _fetch_github_commits(owner_repo: str, days: int = 30):
     now = datetime.now(timezone.utc)
     since_dt = now - timedelta(days=days)
     since_str = since_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
-    url = f"https://api.github.com/repos/{owner_repo}/commits?since={since_str}&per_page=100"
-
-    try:
-        req = urllib.request.Request(url, headers=_github_headers())
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-    except Exception:
+    urls = [
+        f"https://api.github.com/repos/{owner_repo}/commits?since={since_str}&per_page=100",
+        f"https://api.github.com/repos/{owner_repo}/commits?per_page=100",
+    ]
+    data = None
+    for url in urls:
+        try:
+            req = urllib.request.Request(url, headers=_github_headers())
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                if data:
+                    break
+        except Exception:
+            continue
+    if not data:
         return [], []
 
     by_day = {}
@@ -135,6 +143,69 @@ def _fetch_github_contributor_stats(owner_repo: str):
 
     result.sort(key=lambda x: x["total"], reverse=True)
     return result
+
+
+def _fetch_github_kpis(owner_repo: str):
+    """
+    Fetch real KPIs from GitHub API.
+    Returns dict: totalCommits, activePRs, avgCycleTimeDays, deploymentFreq (commits/day),
+    plus trend strings (computed or empty).
+    """
+    if not owner_repo:
+        return {}
+
+    kpis = {
+        "totalCommits": 0,
+        "totalCommitsTrend": "",
+        "activePRs": 0,
+        "activePRsTrend": "",
+        "avgCycleTimeDays": 0,
+        "avgCycleTimeTrend": "",
+        "deploymentFreq": 0,
+        "deploymentFreqTrend": "",
+    }
+
+    try:
+        # Total commits from contributors
+        contributors = _fetch_github_contributor_stats(owner_repo)
+        total_commits = sum(c.get("total", 0) for c in contributors)
+        kpis["totalCommits"] = total_commits
+
+        # Commits per day (last 30d) as activity/deployment proxy
+        daily_counts, _ = _fetch_github_commits(owner_repo, days=30)
+        commits_last_30 = sum(daily_counts) if daily_counts else 0
+        kpis["deploymentFreq"] = round(commits_last_30 / 30, 1) if daily_counts else 0
+
+        # Open PRs
+        url = f"https://api.github.com/repos/{owner_repo}/pulls?state=open&per_page=100"
+        req = urllib.request.Request(url, headers=_github_headers())
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            prs_open = json.loads(resp.read().decode("utf-8"))
+        kpis["activePRs"] = len(prs_open) if isinstance(prs_open, list) else 0
+
+        # Avg cycle time from closed PRs (closed_at - created_at)
+        url_closed = f"https://api.github.com/repos/{owner_repo}/pulls?state=closed&per_page=30&sort=updated&direction=desc"
+        req_closed = urllib.request.Request(url_closed, headers=_github_headers())
+        with urllib.request.urlopen(req_closed, timeout=10) as resp:
+            prs_closed = json.loads(resp.read().decode("utf-8"))
+        if isinstance(prs_closed, list):
+            times = []
+            for pr in prs_closed:
+                created = pr.get("created_at")
+                closed = pr.get("closed_at")
+                if created and closed:
+                    try:
+                        dt_c = datetime.strptime(created[:19], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
+                        dt_cl = datetime.strptime(closed[:19], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
+                        times.append((dt_cl - dt_c).total_seconds() / 86400)
+                    except Exception:
+                        pass
+            if times:
+                kpis["avgCycleTimeDays"] = round(sum(times) / len(times), 1)
+    except Exception:
+        pass
+
+    return kpis
 
 
 def row_to_employee(row):
@@ -574,6 +645,20 @@ def github_contributors():
     return jsonify(stats)
 
 
+@app.route("/api/github/activity", methods=["GET"])
+def github_activity():
+    """Recent commits from GitHub for Recent Activity feed."""
+    _, activity = _fetch_github_commits(GITHUB_REPO, days=30)
+    return jsonify(activity)
+
+
+@app.route("/api/github/kpis", methods=["GET"])
+def github_kpis():
+    """Real KPIs from GitHub: commits, PRs, cycle time, commits/day."""
+    kpis = _fetch_github_kpis(GITHUB_REPO)
+    return jsonify(kpis)
+
+
 @app.route("/api/dashboard", methods=["GET"])
 def get_dashboard():
     """Get dashboard data: team KPIs, commits over time, recent activity, employees."""
@@ -593,7 +678,11 @@ def get_dashboard():
     commits_over_time = json.loads(row["commits_over_time"]) if row["commits_over_time"] else []
     recent_activity = json.loads(row["recent_activity"]) if row["recent_activity"] else []
 
-    # Try to enhance dashboard with live GitHub activity for the configured repo.
+    # Replace with real GitHub data when available
+    gh_kpis = _fetch_github_kpis(GITHUB_REPO)
+    if gh_kpis:
+        team_kpis = {**team_kpis, **gh_kpis}
+
     gh_commits, gh_activity = _fetch_github_commits(GITHUB_REPO)
     if gh_commits:
         commits_over_time = gh_commits

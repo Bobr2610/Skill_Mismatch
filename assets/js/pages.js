@@ -2,9 +2,20 @@
  * Page-specific rendering - fetches data from API and binds to DOM
  */
 
+// Map employee IDs → GitHub logins (FIIT team: Bobr2610/FIIT)
+const GITHUB_ACCOUNT_MAP = {
+  'belyanskiy-kirill': 'KirillBelianskiy',
+  'salmanov-eldar': 'EldarSalmanow',
+  'sedov-mikhail': 'Bobr2610',
+};
+const GITHUB_LOGIN_TO_EMPLOYEE = Object.fromEntries(
+  Object.entries(GITHUB_ACCOUNT_MAP).map(([eid, login]) => [String(login).toLowerCase(), eid]),
+);
+
 const Pages = {
   _dashboardData: null,
   _activityShown: 5,
+  _ghContributors: null,
 
   async init() {
     const path = window.location.pathname;
@@ -37,21 +48,33 @@ const Pages = {
     this._dashboardData = db;
     this._activityShown = 5;
 
+    // Prefer GitHub activity when available (real commits)
+    try {
+      const ghActivity = await API.getGitHubActivity();
+      if (ghActivity?.length) this._dashboardData.recentActivity = ghActivity;
+    } catch {}
+
     const kpis = db.teamKPIs || {};
-    this._setText('kpi-commits', (kpis.totalCommits ?? 0).toLocaleString());
+    const fmtNum = (v) => (v != null && v !== '' ? Number(v).toLocaleString() : '—');
+    this._setText('kpi-commits', fmtNum(kpis.totalCommits));
     this._setText('kpi-commits-trend', kpis.totalCommitsTrend ?? '');
-    this._setText('kpi-prs', kpis.activePRs ?? '—');
+    this._setText('kpi-prs', fmtNum(kpis.activePRs));
     this._setText('kpi-prs-trend', kpis.activePRsTrend ?? '');
-    this._setText('kpi-cycle', (kpis.avgCycleTimeDays ?? 0) + ' Days');
+    this._setText('kpi-cycle', kpis.avgCycleTimeDays != null ? (kpis.avgCycleTimeDays + ' Days') : '—');
     this._setText('kpi-cycle-trend', kpis.avgCycleTimeTrend ?? '');
-    this._setText('kpi-deploy', (kpis.deploymentFreq ?? 0) + ' / day');
+    this._setText('kpi-deploy', kpis.deploymentFreq != null ? (kpis.deploymentFreq + ' / day') : '—');
     this._setText('kpi-deploy-trend', kpis.deploymentFreqTrend ?? '');
 
     // Try loading the GitHub-style contributors chart; fall back to simple area chart
-    let ghContributors = null;
-    try {
-      ghContributors = await API.getGitHubContributors();
-    } catch {}
+    let ghContributors = this._ghContributors;
+    if (!ghContributors) {
+      try {
+        ghContributors = await API.getGitHubContributors();
+        this._ghContributors = ghContributors || null;
+      } catch {
+        ghContributors = null;
+      }
+    }
 
     if (ghContributors?.length) {
       Charts.renderContributorsChart(ghContributors, 'commits-chart', 'chart-dates');
@@ -155,14 +178,26 @@ const Pages = {
   _renderActivity(limit) {
     const db = this._dashboardData;
     const activityEl = document.getElementById('recent-activity');
-    if (!activityEl || !db?.recentActivity?.length) return;
+    const loadMoreBtn = document.getElementById('load-more-activity');
+    if (!activityEl) return;
+    if (!db?.recentActivity?.length) {
+      activityEl.innerHTML = `<p class="text-slate-500 dark:text-slate-400 text-sm py-4">${i18n.t('dashboard.no_activity')}</p>`;
+      if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+      return;
+    }
     const employees = db.employees || [];
     activityEl.innerHTML = db.recentActivity
       .slice(0, limit)
       .map((a) => {
-          const emp = employees.find((e) => e.id === a.userId);
+          const empById = employees.find((e) => e.id === a.userId);
+          const empByLogin = a.userId && GITHUB_LOGIN_TO_EMPLOYEE[String(a.userId).toLowerCase()]
+            ? employees.find((e) => e.id === GITHUB_LOGIN_TO_EMPLOYEE[a.userId.toLowerCase()])
+            : null;
+          const emp = empById || empByLogin;
           const name = emp?.name || a.userId;
-          const avatar = emp?.avatar || `https://ui-avatars.com/api/?name=${String(name).replace(/ /g, '+')}&background=135bec&color=fff`;
+          let avatar = emp?.avatar || `https://ui-avatars.com/api/?name=${String(name).replace(/ /g, '+')}&background=135bec&color=fff`;
+          const gh = this._findGithubForEmployee(emp?.id || a.userId);
+          if (gh?.avatar) avatar = gh.avatar;
           let content = '';
           if (a.type === 'commit') content = `${name} ${i18n.t('activity.committed_to')} <span class="text-primary font-semibold">${a.repo || ''}</span>`;
           else if (a.type === 'review') content = `${name} ${i18n.t('activity.requested_review')}`;
@@ -198,7 +233,6 @@ const Pages = {
       })
       .join('');
 
-    const loadMoreBtn = document.getElementById('load-more-activity');
     if (loadMoreBtn) {
       loadMoreBtn.style.display = limit >= db.recentActivity.length ? 'none' : 'block';
     }
@@ -222,8 +256,18 @@ const Pages = {
     this._setText('profile-title', emp.title);
     this._setText('profile-location', emp.location);
     this._setText('profile-email', emp.email);
+    // Prefer GitHub avatar when linked, but keep local name/title
+    if (!this._ghContributors) {
+      try {
+        this._ghContributors = await API.getGitHubContributors();
+      } catch {
+        this._ghContributors = null;
+      }
+    }
     const avatarEl = document.getElementById('profile-avatar');
-    if (avatarEl) avatarEl.style.backgroundImage = `url('${emp.avatar || ''}')`;
+    const ghForEmp = this._findGithubForEmployee(emp.id);
+    const avatarUrl = (ghForEmp && ghForEmp.avatar) || emp.avatar || '';
+    if (avatarEl) avatarEl.style.backgroundImage = `url('${avatarUrl}')`;
     this._setText('breadcrumb-current', emp.name);
 
     const m = emp.metrics || {};
@@ -381,7 +425,9 @@ const Pages = {
       collabEl.innerHTML = emp.collaborators
         .map((c) => {
           const cEmp = employees.find((e) => e.id === c.id);
-          const avatar = cEmp?.avatar || `https://ui-avatars.com/api/?name=${String(c.name || '').replace(/ /g, '+')}&background=135bec&color=fff`;
+          let avatar = cEmp?.avatar || `https://ui-avatars.com/api/?name=${String(c.name || '').replace(/ /g, '+')}&background=135bec&color=fff`;
+          const gh = this._findGithubForEmployee(c.id);
+          if (gh?.avatar) avatar = gh.avatar;
           return `
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -452,6 +498,24 @@ const Pages = {
     }
 
     if (typeof Storage !== 'undefined') Storage.setComparison(emp1.id, emp2.id);
+
+    // Enrich with GitHub avatars and commits
+    let ghContributors = this._ghContributors;
+    if (!ghContributors) {
+      try {
+        ghContributors = await API.getGitHubContributors();
+        this._ghContributors = ghContributors;
+      } catch {
+        ghContributors = [];
+      }
+    }
+    const gh1 = this._findGithubForEmployee(emp1.id);
+    const gh2 = this._findGithubForEmployee(emp2.id);
+    const emp1Avatar = gh1?.avatar || emp1.avatar || '';
+    const emp2Avatar = gh2?.avatar || emp2.avatar || '';
+    const emp1WithGh = { ...emp1, avatar: emp1Avatar, commits: gh1?.total ?? emp1.commits };
+    const emp2WithGh = { ...emp2, avatar: emp2Avatar, commits: gh2?.total ?? emp2.commits };
+
     const stats1 = emp1.activityStats || { productivity: 50, quality: 50, collaboration: 50, reliability: 50, initiative: 50, expertise: 50 };
     const stats2 = emp2.activityStats || { productivity: 50, quality: 50, collaboration: 50, reliability: 50, initiative: 50, expertise: 50 };
 
@@ -476,7 +540,7 @@ const Pages = {
       </div>
       <div class="col-span-2 grid grid-cols-3 gap-4 mb-8">
         <div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 text-center">
-          <div class="size-16 rounded-full mx-auto mb-2 bg-cover" style="background-image: url('${emp1.avatar || ''}')"></div>
+          <div class="size-16 rounded-full mx-auto mb-2 bg-cover" style="background-image: url('${emp1Avatar}')"></div>
           <h3 class="font-bold text-slate-900 dark:text-slate-100">${emp1.name}</h3>
           <p class="text-sm text-slate-500 dark:text-slate-400">${emp1.title || ''}</p>
         </div>
@@ -484,7 +548,7 @@ const Pages = {
           <span class="material-symbols-outlined text-4xl text-slate-400">compare_arrows</span>
         </div>
         <div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 text-center">
-          <div class="size-16 rounded-full mx-auto mb-2 bg-cover" style="background-image: url('${emp2.avatar || ''}')"></div>
+          <div class="size-16 rounded-full mx-auto mb-2 bg-cover" style="background-image: url('${emp2Avatar}')"></div>
           <h3 class="font-bold text-slate-900 dark:text-slate-100">${emp2.name}</h3>
           <p class="text-sm text-slate-500 dark:text-slate-400">${emp2.title || ''}</p>
         </div>
@@ -497,8 +561,8 @@ const Pages = {
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
             ${metrics
               .map((m) => {
-                const v1 = getVal(emp1, m.key);
-                const v2 = getVal(emp2, m.key);
+                const v1 = getVal(emp1WithGh, m.key);
+                const v2 = getVal(emp2WithGh, m.key);
                 const s1 = m.fmt(v1);
                 const s2 = m.fmt(v2);
                 let winner = '-';
@@ -566,5 +630,16 @@ const Pages = {
   _setText(id, str) {
     const el = document.getElementById(id);
     if (el) el.textContent = str ?? '';
+  },
+
+  _findGithubForEmployee(id) {
+    if (!id || !this._ghContributors?.length) return null;
+    const preferred = GITHUB_ACCOUNT_MAP[id];
+    const candidates = [];
+    if (preferred) candidates.push(String(preferred).toLowerCase());
+    candidates.push(String(id).toLowerCase());
+    return this._ghContributors.find(
+      (c) => candidates.includes(String(c.login || '').toLowerCase()),
+    ) || null;
   },
 };

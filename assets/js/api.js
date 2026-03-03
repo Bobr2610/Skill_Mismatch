@@ -130,6 +130,12 @@ const API = {
     return res.json();
   },
 
+  async getGitHubActivity() {
+    const res = await fetch(`${this.baseUrl}/github/activity`);
+    if (!res.ok) throw new Error('Failed to fetch GitHub activity');
+    return res.json();
+  },
+
   async getGitHubContributors() {
     return this._cached('github-contributors', async () => {
       const res = await fetch(`${this.baseUrl}/github/contributors`);

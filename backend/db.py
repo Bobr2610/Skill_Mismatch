@@ -161,9 +161,9 @@ def seed_db():
                 "bugsResolved": 80,
                 "bugsTrend": "-10%",
             }),
-            "commits": 210,
-            "prs_active": 10,
-            "impact_score": 88,
+            "commits": 0,
+            "prs_active": 0,
+            "impact_score": 0,
             "commits_history": [
                 {"message": "feat(frontend): добавить экран портфеля инвестора"},
                 {"message": "refactor(ui): унифицировать дизайн карточек активов"},
@@ -192,9 +192,9 @@ def seed_db():
                 "bugsResolved": 70,
                 "bugsTrend": "-8%",
             }),
-            "commits": 185,
-            "prs_active": 8,
-            "impact_score": 82,
+            "commits": 0,
+            "prs_active": 0,
+            "impact_score": 0,
             "commits_history": [
                 {"message": "feat(api): реализовать расчёт доходности портфеля по дням"},
                 {"message": "chore(db): добавить индексы для таблицы сделок"},
@@ -223,9 +223,9 @@ def seed_db():
                 "bugsResolved": 95,
                 "bugsTrend": "-12%",
             }),
-            "commits": 170,
-            "prs_active": 7,
-            "impact_score": 80,
+            "commits": 0,
+            "prs_active": 0,
+            "impact_score": 0,
             "commits_history": [
                 {"message": "feat: интегрировать уведомления о ребалансировке портфеля"},
                 {"message": "refactor: вынести общие компоненты в ui-библиотеку"},
@@ -258,42 +258,19 @@ def seed_db():
             emp["tech_stack"], emp["primary_tech"], emp["collaborators"]
         ))
 
-    # Dashboard config — adjusted for 3-person FIIT team
+    # Dashboard config — fallback when GitHub unavailable (real data from /api/dashboard)
     team_kpis = json.dumps({
-        "totalCommits": 565,
-        "totalCommitsTrend": "+12%",
-        "activePRs": 25,
-        "activePRsTrend": "+6%",
-        "avgCycleTimeDays": 1.8,
-        "avgCycleTimeTrend": "-0.2 Days",
-        "deploymentFreq": 4.2,
-        "deploymentFreqTrend": "+0.8/day",
+        "totalCommits": 0,
+        "totalCommitsTrend": "",
+        "activePRs": 0,
+        "activePRsTrend": "",
+        "avgCycleTimeDays": 0,
+        "avgCycleTimeTrend": "",
+        "deploymentFreq": 0,
+        "deploymentFreqTrend": "",
     })
-    commits_over_time = json.dumps([
-        18, 21, 15, 24, 19, 22, 17, 20, 25, 23, 18, 16, 22, 19, 26, 21, 17, 24, 20, 23, 18, 22, 19, 25, 21, 16, 20, 24, 22, 18, 23
-    ])
-    _raw_activity = [
-        {"type": "commit", "userId": "belyanskiy-kirill", "repo": "frontend", "message": "feat(frontend): добавить экран портфеля инвестора", "timeAgo": "5 minutes ago"},
-        {"type": "review", "userId": "salmanov-eldar", "prNumber": 87, "prTitle": "Добавить расчёт доходности портфеля", "timeAgo": "20 minutes ago"},
-        {"type": "commit", "userId": "sedov-mikhail", "repo": "main", "message": "feat: интегрировать уведомления о ребалансировке портфеля", "timeAgo": "1 hour ago"},
-        {"type": "merge", "userId": "belyanskiy-kirill", "message": "Унифицировать дизайн карточек активов", "timeAgo": "2 hours ago"},
-        {"type": "commit", "userId": "salmanov-eldar", "repo": "backend", "message": "chore(db): добавить индексы для таблицы сделок", "timeAgo": "3 hours ago"},
-        {"type": "deploy", "userId": "sedov-mikhail", "env": "Staging", "timeAgo": "4 hours ago"},
-        {"type": "fix", "userId": "belyanskiy-kirill", "repo": "frontend", "message": "fix: исправить вычисление доходности за период", "timeAgo": "5 hours ago"},
-        {"type": "review", "userId": "sedov-mikhail", "prNumber": 86, "prTitle": "Вынести общие компоненты в ui-библиотеку", "timeAgo": "6 hours ago"},
-        {"type": "commit", "userId": "salmanov-eldar", "repo": "backend", "message": "fix(api): корректно обрабатывать отсутствие котировок", "timeAgo": "8 hours ago"},
-        {"type": "deploy", "userId": "belyanskiy-kirill", "env": "Production", "timeAgo": "10 hours ago"},
-        {"type": "commit", "userId": "sedov-mikhail", "repo": "main", "message": "refactor: вынести общие компоненты в ui-библиотеку", "timeAgo": "12 hours ago"},
-        {"type": "review", "userId": "salmanov-eldar", "prNumber": 85, "prTitle": "Оптимизировать запросы к БД", "timeAgo": "14 hours ago"},
-        {"type": "merge", "userId": "sedov-mikhail", "message": "Устранить дублирование расчёта комиссий брокера", "timeAgo": "16 hours ago"},
-        {"type": "commit", "userId": "belyanskiy-kirill", "repo": "frontend", "message": "refactor(ui): унифицировать дизайн карточек активов", "timeAgo": "Yesterday"},
-        {"type": "commit", "userId": "salmanov-eldar", "repo": "backend", "message": "feat(api): реализовать расчёт доходности портфеля по дням", "timeAgo": "Yesterday"},
-    ]
-    recent_activity = json.dumps([
-        {**a, "icon": ACTIVITY_ICONS.get(a["type"], ("commit", "emerald"))[0],
-         "iconColor": ACTIVITY_ICONS.get(a["type"], ("commit", "emerald"))[1]}
-        for a in _raw_activity
-    ])
+    commits_over_time = json.dumps([])
+    recent_activity = json.dumps([])
 
     cur.execute("""
         INSERT OR REPLACE INTO dashboard_config (id, team_kpis, commits_over_time, recent_activity)

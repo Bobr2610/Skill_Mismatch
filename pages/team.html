@@ -145,31 +145,46 @@
       const form = document.getElementById('add-employee-form');
       const formError = document.getElementById('form-error');
 
+      const GITHUB_MAP = { 'belyanskiy-kirill': 'KirillBelianskiy', 'salmanov-eldar': 'EldarSalmanow', 'sedov-mikhail': 'Bobr2610' };
       async function loadTeam() {
         try {
-          const employees = await API.getEmployees();
+          const [employees, ghContributors] = await Promise.all([
+            API.getEmployees(),
+            API.getGitHubContributors().catch(() => []),
+          ]);
           if (!employees?.length) {
             teamList.innerHTML = `<p class="p-8 text-center text-slate-500 dark:text-slate-400">${i18n.t('team.no_employees')}</p>`;
             return;
           }
+          const ghByLogin = Object.fromEntries((ghContributors || []).map((c) => [String(c.login).toLowerCase(), c]));
+          const getGh = (eid) => {
+            const login = GITHUB_MAP[eid];
+            return login ? ghByLogin[login.toLowerCase()] : null;
+          };
           teamList.innerHTML = employees
-            .sort((a, b) => (b.impactScore || 0) - (a.impactScore || 0))
-            .map((e) => `
+            .sort((a, b) => ((getGh(b.id)?.total ?? b.impactScore ?? 0) - (getGh(a.id)?.total ?? a.impactScore ?? 0)))
+            .map((e) => {
+              const gh = getGh(e.id);
+              const avatar = gh?.avatar || e.avatar || '';
+              const commits = gh?.total ?? e.commits ?? 0;
+              const impact = gh ? Math.round((commits / Math.max(1, (ghContributors?.[0]?.total || 1))) * 100) : (e.impactScore ?? 0);
+              return `
             <div class="flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
               <a href="profile.html?id=${e.id}" class="flex items-center gap-4 flex-1 min-w-0">
-                <div class="size-12 rounded-full bg-slate-200 dark:bg-slate-700 bg-cover shrink-0" style="background-image: url('${e.avatar || ''}')"></div>
+                <div class="size-12 rounded-full bg-slate-200 dark:bg-slate-700 bg-cover shrink-0" style="background-image: url('${avatar}')"></div>
                 <div class="min-w-0">
                   <p class="font-semibold text-slate-900 dark:text-white truncate">${e.name}</p>
                   <p class="text-sm text-slate-500 dark:text-slate-400 truncate">${e.title || ''} • ${e.role || ''}</p>
                 </div>
               </a>
               <div class="flex items-center gap-4 shrink-0">
-                <span class="text-sm text-slate-500">${e.commits ?? 0} ${i18n.t('team.commits')}</span>
-                <span class="text-sm font-medium text-primary">${e.impactScore ?? 0}% ${i18n.t('team.impact')}</span>
+                <span class="text-sm text-slate-500">${commits.toLocaleString()} ${i18n.t('team.commits')}</span>
+                <span class="text-sm font-medium text-primary">${impact}% ${i18n.t('team.impact')}</span>
                 <a href="comparison.html?id1=${e.id}" class="text-primary text-sm font-medium hover:underline">${i18n.t('team.compare_link')}</a>
               </div>
             </div>
-          `).join('');
+          `;
+            }).join('');
         } catch (err) {
           teamList.innerHTML = `<p class="p-8 text-center text-red-500">${err.message}</p>`;
         }
