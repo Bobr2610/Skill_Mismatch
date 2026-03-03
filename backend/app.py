@@ -8,7 +8,7 @@ from datetime import datetime, timezone, timedelta
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from db import get_connection, init_db, seed_db
-from ai import compute_activity_stats, build_activity_summary as ai_build_summary, get_career_recommendation
+from ai import compute_activity_stats, build_activity_summary as ai_build_summary, get_career_recommendation, analyze_commit_contribution
 from constants import ROLE_DECAY_COEFFICIENTS
 
 app = Flask(__name__, static_folder='../', static_url_path='')
@@ -622,6 +622,153 @@ def get_employee_recommendation(employee_id):
 
     rec = get_career_recommendation(activity_stats, title, role)
     return jsonify(rec)
+
+
+@app.route("/api/employees/<employee_id>/commit-contribution", methods=["POST"])
+def commit_contribution(employee_id):
+    """Mode 1: Analyze a commit and add its contribution to employee stats."""
+    data = request.get_json()
+    if not data or not data.get("commitMessage"):
+        return jsonify({"error": "commitMessage is required"}), 400
+
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM employees WHERE id = ?", (employee_id,))
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"error": "Employee not found"}), 404
+
+    emp_dict = dict(row)
+    role = emp_dict.get("role", "Mid")
+
+    current_stats = {}
+    if emp_dict.get("activity_stats"):
+        try:
+            current_stats = json.loads(emp_dict["activity_stats"])
+        except Exception:
+            pass
+    if not current_stats:
+        current_stats = {k: 50 for k in ['productivity', 'quality', 'collaboration', 'reliability', 'initiative', 'expertise']}
+
+    increments = analyze_commit_contribution(data["commitMessage"], role)
+
+    stat_keys = ['productivity', 'quality', 'collaboration', 'reliability', 'initiative', 'expertise']
+    new_stats = {}
+    for k in stat_keys:
+        new_stats[k] = min(100, max(0, current_stats.get(k, 50) + increments.get(k, 0)))
+
+    cur.execute(
+        "UPDATE employees SET activity_stats = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        (json.dumps(new_stats), employee_id),
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "activityStats": new_stats,
+        "increments": increments,
+        "statsBefore": current_stats,
+        "commitMessage": data["commitMessage"],
+        "message": "Commit contribution applied",
+    })
+
+
+@app.route("/api/employees/<employee_id>/monthly-decay", methods=["POST"])
+def monthly_decay(employee_id):
+    """Mode 1 decay: Apply monthly decay (stats × K) without adding new values."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM employees WHERE id = ?", (employee_id,))
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"error": "Employee not found"}), 404
+
+    emp_dict = dict(row)
+    role = emp_dict.get("role", "Mid")
+    coefficient = _get_decay_coefficient(role)
+
+    current_stats = {}
+    if emp_dict.get("activity_stats"):
+        try:
+            current_stats = json.loads(emp_dict["activity_stats"])
+        except Exception:
+            pass
+    if not current_stats:
+        current_stats = {k: 50 for k in ['productivity', 'quality', 'collaboration', 'reliability', 'initiative', 'expertise']}
+
+    stat_keys = ['productivity', 'quality', 'collaboration', 'reliability', 'initiative', 'expertise']
+    new_stats = {}
+    for k in stat_keys:
+        new_stats[k] = min(100, max(0, int(current_stats.get(k, 50) * coefficient)))
+
+    current_month = datetime.now().strftime("%Y-%m")
+    zero_monthly = {k: 0 for k in stat_keys}
+
+    cur.execute("""
+        INSERT INTO stats_history (employee_id, month, stats_before, monthly_value, stats_after, decay_coefficient)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        employee_id, current_month,
+        json.dumps(current_stats), json.dumps(zero_monthly),
+        json.dumps(new_stats), coefficient,
+    ))
+
+    cur.execute(
+        "UPDATE employees SET activity_stats = ?, last_recalculation = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        (json.dumps(new_stats), current_month, employee_id),
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "activityStats": new_stats,
+        "statsBefore": current_stats,
+        "coefficient": coefficient,
+        "role": role,
+        "month": current_month,
+        "message": f"Monthly decay applied (K={coefficient})",
+    })
+
+
+@app.route("/api/employees/monthly-decay-all", methods=["POST"])
+def monthly_decay_all():
+    """Apply monthly decay to all employees (stats × K, no AI recomputation)."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, role, activity_stats FROM employees")
+    rows = cur.fetchall()
+
+    results = []
+    current_month = datetime.now().strftime("%Y-%m")
+    stat_keys = ['productivity', 'quality', 'collaboration', 'reliability', 'initiative', 'expertise']
+
+    for row in rows:
+        row = dict(row)
+        try:
+            role = row.get("role", "Mid")
+            coefficient = _get_decay_coefficient(role)
+            current_stats = json.loads(row["activity_stats"]) if row.get("activity_stats") else {k: 50 for k in stat_keys}
+            new_stats = {k: min(100, max(0, int(current_stats.get(k, 50) * coefficient))) for k in stat_keys}
+            zero_monthly = {k: 0 for k in stat_keys}
+
+            cur.execute("""
+                INSERT INTO stats_history (employee_id, month, stats_before, monthly_value, stats_after, decay_coefficient)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (row["id"], current_month, json.dumps(current_stats), json.dumps(zero_monthly), json.dumps(new_stats), coefficient))
+
+            cur.execute(
+                "UPDATE employees SET activity_stats = ?, last_recalculation = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                (json.dumps(new_stats), current_month, row["id"]),
+            )
+            results.append({"id": row["id"], "name": row["name"], "status": "ok", "coefficient": coefficient})
+        except Exception as e:
+            results.append({"id": row["id"], "name": row["name"], "status": str(e)})
+
+    conn.commit()
+    conn.close()
+    return jsonify({"results": results, "message": f"Monthly decay applied to {len(results)} employees"})
 
 
 @app.route("/api/employees/<employee_id>", methods=["DELETE"])

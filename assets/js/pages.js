@@ -292,19 +292,26 @@ const Pages = {
 
     const summary = emp.activitySummary || {};
     const lastTitles = summary.lastCommitTitles || [];
+    const pendingCommits = summary.pendingCommits || [];
     const commitsEl = document.getElementById('recent-commits');
     if (commitsEl) {
       if (lastTitles.length) {
         commitsEl.innerHTML = lastTitles
           .map(
-            (msg) => `
-          <div class="group flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors border-b border-slate-100 dark:border-slate-800/50 last:border-0">
-            <div class="size-2 rounded-full bg-primary mt-1"></div>
+            (msg) => {
+              const isPending = pendingCommits.includes(msg);
+              const badge = isPending
+                ? `<span class="px-1.5 py-0.5 text-[9px] font-bold bg-blue-500/10 text-blue-500 rounded">${i18n.t('profile.commit_pending')}</span>`
+                : `<span class="px-1.5 py-0.5 text-[9px] font-bold bg-emerald-500/10 text-emerald-500 rounded">✓</span>`;
+              return `
+          <div class="group flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors border-b border-slate-100 dark:border-slate-800/50 last:border-0" data-commit-msg="${msg.replace(/"/g, '&quot;')}">
+            <div class="size-2 rounded-full ${isPending ? 'bg-blue-500 animate-pulse' : 'bg-primary'} mt-1"></div>
             <div class="flex-1 min-w-0">
               <p class="text-slate-900 dark:text-slate-100 text-sm font-semibold truncate">${msg}</p>
             </div>
-          </div>
-        `
+            ${badge}
+          </div>`;
+            }
           )
           .join('');
       } else {
@@ -321,9 +328,13 @@ const Pages = {
     const matchedRole = Object.keys(coefficients).find(k => empRole.toLowerCase().includes(k.toLowerCase())) || 'Mid';
     const K = coefficients[matchedRole] || 0.5;
     this._setText('green-coefficient', `K(${matchedRole}) = ${K}`);
+    this._setText('decay-coefficient', `K(${matchedRole}) = ${K}`);
     if (emp.lastRecalculation) {
       this._setText('green-last-recalc', `${i18n.t('profile.last_recalc')}: ${emp.lastRecalculation}`);
     }
+
+    this._initCommitContribution(id, K);
+    this._initMonthlyDecay(id, K, matchedRole);
 
     const greenBtn = document.getElementById('green-recalc-btn');
     const greenResult = document.getElementById('green-result');
@@ -439,6 +450,10 @@ const Pages = {
         `;
         })
         .join('');
+    }
+
+    if (pendingCommits.length) {
+      this._autoAnalyzePending(id, pendingCommits);
     }
   },
 
@@ -584,6 +599,162 @@ const Pages = {
       </div>
     `;
     Charts.renderComparisonRadar(stats1, stats2, 'comparison-radar-inner', emp1.name, emp2.name);
+  },
+
+  async _autoAnalyzePending(employeeId, pendingCommits) {
+    const resultEl = document.getElementById('commit-result');
+    const titleEl = document.getElementById('commit-result-title');
+    const detailsEl = document.getElementById('commit-result-details');
+    const btn = document.getElementById('commit-analyze-btn');
+    if (!resultEl || !titleEl || !detailsEl) return;
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<span class="material-symbols-outlined text-lg animate-spin">progress_activity</span> ${i18n.t('profile.commit_auto')}`;
+    }
+    resultEl.classList.remove('hidden');
+    titleEl.textContent = `${i18n.t('profile.commit_auto')} (${pendingCommits.length})...`;
+    detailsEl.innerHTML = '';
+
+    const statLabels = {
+      productivity: i18n.t('stats.productivity'),
+      quality: i18n.t('stats.quality'),
+      collaboration: i18n.t('stats.collaboration'),
+      reliability: i18n.t('stats.reliability'),
+      initiative: i18n.t('stats.initiative'),
+      expertise: i18n.t('stats.expertise'),
+    };
+
+    for (const msg of pendingCommits) {
+      try {
+        const res = await API.commitContribution(employeeId, msg);
+        const incLines = Object.keys(statLabels)
+          .filter(k => (res.increments?.[k] ?? 0) > 0)
+          .map(k => `<span class="text-blue-500">+${res.increments[k]} ${statLabels[k]}</span>`)
+          .join(', ') || '<span class="text-slate-400">+0</span>';
+        detailsEl.innerHTML += `<div class="p-2 rounded bg-slate-50 dark:bg-slate-800/50 mb-1"><span class="font-semibold text-slate-700 dark:text-slate-300">${msg.substring(0, 50)}${msg.length > 50 ? '…' : ''}</span><br>${incLines}</div>`;
+
+        Charts.renderActivityStatsRadar(res.activityStats, 'activity-stats-radar');
+        for (const [k, elId] of [['productivity','stat-prod'],['quality','stat-quality'],['collaboration','stat-collab'],['reliability','stat-reliab'],['initiative','stat-init'],['expertise','stat-expert']]) {
+          this._setText(elId, (res.activityStats[k] ?? 50) + '/100');
+        }
+
+        const commitEl = document.querySelector(`[data-commit-msg="${msg.replace(/"/g, '&quot;')}"]`);
+        if (commitEl) {
+          const dot = commitEl.querySelector('.animate-pulse');
+          if (dot) { dot.classList.remove('animate-pulse', 'bg-blue-500'); dot.classList.add('bg-primary'); }
+          const badge = commitEl.querySelector('.bg-blue-500\\/10');
+          if (badge) { badge.className = 'px-1.5 py-0.5 text-[9px] font-bold bg-emerald-500/10 text-emerald-500 rounded'; badge.textContent = '✓'; }
+        }
+      } catch (e) {
+        detailsEl.innerHTML += `<div class="p-2 rounded bg-red-50 dark:bg-red-900/20 mb-1 text-red-500">${msg.substring(0, 50)}: ${e.message}</div>`;
+      }
+    }
+
+    titleEl.textContent = `${i18n.t('profile.commit_auto_done')} (${pendingCommits.length})`;
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<span class="material-symbols-outlined text-lg">commit</span> <span>${i18n.t('profile.commit_analyze')}</span>`;
+    }
+  },
+
+  _initCommitContribution(employeeId, K) {
+    const btn = document.getElementById('commit-analyze-btn');
+    const input = document.getElementById('commit-message-input');
+    const result = document.getElementById('commit-result');
+    const title = document.getElementById('commit-result-title');
+    const details = document.getElementById('commit-result-details');
+    if (!btn || !input) return;
+
+    btn.onclick = async () => {
+      const msg = input.value.trim();
+      if (!msg) return;
+      btn.disabled = true;
+      btn.innerHTML = `<span class="material-symbols-outlined text-lg animate-spin">progress_activity</span> ${i18n.t('profile.commit_analyzing')}`;
+      try {
+        const res = await API.commitContribution(employeeId, msg);
+        result.classList.remove('hidden');
+        title.textContent = i18n.t('profile.commit_done');
+        const statLabels = {
+          productivity: i18n.t('stats.productivity'),
+          quality: i18n.t('stats.quality'),
+          collaboration: i18n.t('stats.collaboration'),
+          reliability: i18n.t('stats.reliability'),
+          initiative: i18n.t('stats.initiative'),
+          expertise: i18n.t('stats.expertise'),
+        };
+        details.innerHTML = Object.keys(statLabels).map(k => {
+          const inc = res.increments?.[k] ?? 0;
+          const before = res.statsBefore?.[k] ?? '?';
+          const after = res.activityStats?.[k] ?? '?';
+          if (inc === 0) return `<div class="flex justify-between"><span>${statLabels[k]}</span><span class="text-slate-400">+0</span></div>`;
+          return `<div class="flex justify-between"><span>${statLabels[k]}</span><span class="text-blue-500 font-bold">${before} + ${inc} = ${after}</span></div>`;
+        }).join('');
+
+        Charts.renderActivityStatsRadar(res.activityStats, 'activity-stats-radar');
+        for (const [k, elId] of [['productivity','stat-prod'],['quality','stat-quality'],['collaboration','stat-collab'],['reliability','stat-reliab'],['initiative','stat-init'],['expertise','stat-expert']]) {
+          this._setText(elId, (res.activityStats[k] ?? 50) + '/100');
+        }
+        input.value = '';
+      } catch (e) {
+        console.error(e);
+        result.classList.remove('hidden');
+        title.textContent = i18n.t('rec.error');
+        title.className = 'font-bold text-sm text-red-500 mb-2';
+        details.textContent = e.message;
+      }
+      btn.disabled = false;
+      btn.innerHTML = `<span class="material-symbols-outlined text-lg">commit</span> <span>${i18n.t('profile.commit_analyze')}</span>`;
+    };
+  },
+
+  _initMonthlyDecay(employeeId, K, matchedRole) {
+    const btn = document.getElementById('decay-btn');
+    const result = document.getElementById('decay-result');
+    const title = document.getElementById('decay-result-title');
+    const details = document.getElementById('decay-result-details');
+    if (!btn) return;
+
+    btn.onclick = async () => {
+      btn.disabled = true;
+      btn.innerHTML = `<span class="material-symbols-outlined text-lg animate-spin">progress_activity</span> ${i18n.t('profile.decay_applying')}`;
+      try {
+        const res = await API.monthlyDecay(employeeId);
+        result.classList.remove('hidden');
+        title.textContent = `${i18n.t('profile.decay_done')} (K=${res.coefficient})`;
+        const statLabels = {
+          productivity: i18n.t('stats.productivity'),
+          quality: i18n.t('stats.quality'),
+          collaboration: i18n.t('stats.collaboration'),
+          reliability: i18n.t('stats.reliability'),
+          initiative: i18n.t('stats.initiative'),
+          expertise: i18n.t('stats.expertise'),
+        };
+        details.innerHTML = Object.keys(statLabels).map(k => {
+          const before = res.statsBefore?.[k] ?? '?';
+          const after = res.activityStats?.[k] ?? '?';
+          const diff = after - before;
+          const diffColor = diff < 0 ? 'text-amber-500' : 'text-slate-400';
+          const diffStr = diff < 0 ? `${diff}` : `${diff}`;
+          return `<div class="flex justify-between"><span>${statLabels[k]}</span><span>${before} × ${res.coefficient} = <span class="font-bold">${after}</span> <span class="${diffColor}">(${diffStr})</span></span></div>`;
+        }).join('');
+
+        Charts.renderActivityStatsRadar(res.activityStats, 'activity-stats-radar');
+        for (const [k, elId] of [['productivity','stat-prod'],['quality','stat-quality'],['collaboration','stat-collab'],['reliability','stat-reliab'],['initiative','stat-init'],['expertise','stat-expert']]) {
+          this._setText(elId, (res.activityStats[k] ?? 50) + '/100');
+        }
+        this._setText('green-last-recalc', `${i18n.t('profile.last_recalc')}: ${res.month}`);
+        this._loadStatsHistory(employeeId);
+      } catch (e) {
+        console.error(e);
+        result.classList.remove('hidden');
+        title.textContent = i18n.t('rec.error');
+        title.className = 'font-bold text-sm text-red-500 mb-2';
+        details.textContent = e.message;
+      }
+      btn.disabled = false;
+      btn.innerHTML = `<span class="material-symbols-outlined text-lg">trending_down</span> <span>${i18n.t('profile.decay_apply')}</span>`;
+    };
   },
 
   async _loadStatsHistory(employeeId) {

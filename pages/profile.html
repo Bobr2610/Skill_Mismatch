@@ -161,6 +161,32 @@
           </div>
           <div class="space-y-8">
             <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+              <h3 class="text-slate-900 dark:text-slate-100 font-bold mb-4" data-i18n="profile.commit_title">Commit Contribution</h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3" data-i18n="profile.commit_desc">AI analyzes a commit and adds points to relevant stats</p>
+              <textarea id="commit-message-input" rows="3" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none mb-3" data-i18n-placeholder="profile.commit_placeholder" placeholder="Enter commit message..."></textarea>
+              <button id="commit-analyze-btn" class="w-full px-4 py-2 text-sm font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors flex items-center justify-center gap-2 mb-4">
+                <span class="material-symbols-outlined text-lg">commit</span>
+                <span data-i18n="profile.commit_analyze">Analyze Commit</span>
+              </button>
+              <div id="commit-result" class="hidden rounded-lg p-4 border border-slate-200 dark:border-slate-700 space-y-2">
+                <div id="commit-result-title" class="font-bold text-sm text-blue-600 dark:text-blue-400 mb-2"></div>
+                <div id="commit-result-details" class="text-xs text-slate-600 dark:text-slate-400 space-y-1"></div>
+              </div>
+            </div>
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+              <h3 class="text-slate-900 dark:text-slate-100 font-bold mb-4" data-i18n="profile.decay_title">Monthly Decay</h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-1" data-i18n="profile.decay_desc">Applies stat × K(role) — stats decrease without new activity</p>
+              <p id="decay-coefficient" class="text-[11px] text-primary font-semibold mb-3"></p>
+              <button id="decay-btn" class="w-full px-4 py-2 text-sm font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg hover:bg-amber-500/20 transition-colors flex items-center justify-center gap-2 mb-4">
+                <span class="material-symbols-outlined text-lg">trending_down</span>
+                <span data-i18n="profile.decay_apply">Apply Monthly Decay</span>
+              </button>
+              <div id="decay-result" class="hidden rounded-lg p-4 border border-slate-200 dark:border-slate-700 space-y-2">
+                <div id="decay-result-title" class="font-bold text-sm text-amber-600 dark:text-amber-400 mb-2"></div>
+                <div id="decay-result-details" class="text-xs text-slate-600 dark:text-slate-400 space-y-1"></div>
+              </div>
+            </div>
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
               <h3 class="text-slate-900 dark:text-slate-100 font-bold mb-4" data-i18n="profile.green_title">Monthly Recalculation (Green)</h3>
               <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-1" data-i18n="profile.green_desc">new = current × K(role) + monthly value</p>
               <p id="green-coefficient" class="text-[11px] text-primary font-semibold mb-3"></p>

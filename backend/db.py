@@ -102,10 +102,18 @@ def seed_db():
             except Exception:
                 commits_history = []
         last_titles = []
+        pending_commits = []
         for c in commits_history[:5]:
-            msg = c.get("message", "") if isinstance(c, dict) else str(c)
-            if msg:
-                last_titles.append(msg[:80])
+            if isinstance(c, dict):
+                msg = c.get("message", "")
+                if msg:
+                    last_titles.append(msg[:80])
+                if c.get("pending"):
+                    pending_commits.append(msg[:80])
+            else:
+                msg = str(c)
+                if msg:
+                    last_titles.append(msg[:80])
         tech = emp.get("tech_stack") or []
         if isinstance(tech, str):
             try:
@@ -128,10 +136,14 @@ def seed_db():
             "techStack": (tech or [])[:6],
             "primaryTech": emp.get("primary_tech", ""),
             "lastCommitTitles": last_titles,
+            "pendingCommits": pending_commits,
         })
 
     def default_activity_stats(emp):
-        """Default stats from impact_score (AI will override on refresh)."""
+        """Pre-seeded stats: approximate values as if earlier commits were already analyzed via Mode 1."""
+        preseeded = emp.get("_preseeded_stats")
+        if preseeded:
+            return json.dumps(preseeded)
         s = emp.get("impact_score", 50)
         return json.dumps({
             "productivity": min(100, int(s * 1.05)),
@@ -165,10 +177,14 @@ def seed_db():
             "prs_active": 0,
             "impact_score": 0,
             "commits_history": [
-                {"message": "feat(frontend): добавить экран портфеля инвестора"},
+                {"message": "feat(frontend): добавить экран портфеля инвестора", "pending": True},
                 {"message": "refactor(ui): унифицировать дизайн карточек активов"},
                 {"message": "fix: исправить вычисление доходности за период"},
             ],
+            "_preseeded_stats": {
+                "productivity": 72, "quality": 80, "collaboration": 68,
+                "reliability": 70, "initiative": 75, "expertise": 78,
+            },
             "tech_stack": json.dumps(["React", "TypeScript", "Tailwind CSS", "Vite", "Chart.js"]),
             "primary_tech": "React",
             "collaborators": json.dumps([
@@ -196,10 +212,14 @@ def seed_db():
             "prs_active": 0,
             "impact_score": 0,
             "commits_history": [
-                {"message": "feat(api): реализовать расчёт доходности портфеля по дням"},
+                {"message": "feat(api): реализовать расчёт доходности портфеля по дням", "pending": True},
                 {"message": "chore(db): добавить индексы для таблицы сделок"},
                 {"message": "fix(api): корректно обрабатывать отсутствие котировок по инструменту"},
             ],
+            "_preseeded_stats": {
+                "productivity": 70, "quality": 76, "collaboration": 65,
+                "reliability": 78, "initiative": 67, "expertise": 82,
+            },
             "tech_stack": json.dumps(["Python", "FastAPI", "PostgreSQL", "Redis", "Docker"]),
             "primary_tech": "Python",
             "collaborators": json.dumps([
@@ -227,10 +247,14 @@ def seed_db():
             "prs_active": 0,
             "impact_score": 0,
             "commits_history": [
-                {"message": "feat: интегрировать уведомления о ребалансировке портфеля"},
+                {"message": "feat: интегрировать уведомления о ребалансировке портфеля", "pending": True},
                 {"message": "refactor: вынести общие компоненты в ui-библиотеку"},
                 {"message": "fix: устранить дублирование расчёта комиссий брокера"},
             ],
+            "_preseeded_stats": {
+                "productivity": 68, "quality": 77, "collaboration": 72,
+                "reliability": 69, "initiative": 74, "expertise": 71,
+            },
             "tech_stack": json.dumps(["Python", "Flask", "React", "Docker", "NGINX"]),
             "primary_tech": "Python",
             "collaborators": json.dumps([

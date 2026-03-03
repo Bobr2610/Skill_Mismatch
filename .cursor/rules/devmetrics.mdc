@@ -11,7 +11,7 @@ alwaysApply: true
 
 - **Backend**: Python Flask, SQLite
 - **Frontend**: Vanilla JS, Tailwind CSS, no build step
-- **AI**: OpenRouter (GLM 4.5 Air) for activity stats
+- **AI**: OpenRouter (GLM 4.5 Air) for activity stats — evaluates using MathModel (Docs/MathModel.md): W, ΔMI, CI, RF, SV, CA
 
 ## Commands (Primary: Docker)
 
@@ -103,11 +103,30 @@ Then open **http://localhost:5000**
 | POST | `/api/employees/recalculate-all` | Green's recalculation for all employees |
 | GET | `/api/employees/<id>/stats-history` | Monthly stats history (last 12) |
 | GET | `/api/decay-coefficients` | Role decay coefficients |
-| POST | `/api/employees/<id>/recommendation` | AI career recommendation |
+| POST | `/api/employees/<id>/commit-contribution` | Mode 1: AI analyzes commit → adds points to stats |
+| POST | `/api/employees/<id>/monthly-decay` | Mode 1: Apply stat × K(role) decay without AI |
+| POST | `/api/employees/monthly-decay-all` | Mode 1: Monthly decay for all employees |
+| POST | `/api/employees/<id>/recommendation` | Mode 2: AI career recommendation (promote/demote/keep) |
 | GET | `/api/github/contributors` | Per-contributor weekly commit stats from GitHub Stats API |
 | GET | `/api/github/activity` | Recent commits from GitHub for Recent Activity feed |
 | GET | `/api/github/kpis` | Real KPIs from GitHub (commits, PRs, cycle time, commits/day) |
 | GET | `/api/dashboard` | Dashboard data (team KPIs from DB, GitHub activity for `GITHUB_REPO`) |
+
+---
+
+## Two AI Evaluation Modes
+
+### Mode 1: Commit-based Accumulation + Monthly Decay
+- **Per commit**: AI analyzes commit message → returns increments (0-5) for each of 6 stats → added to current stats
+- **Monthly decay**: All stats multiplied by K(role) — without new commits, stats gradually decrease
+- Endpoints: `commit-contribution`, `monthly-decay`, `monthly-decay-all`
+- Key file: `ai.py` → `analyze_commit_contribution()`
+
+### Mode 2: AI Career Recommendation
+- AI compares 6 accumulated stats against `ROLE_REQUIREMENTS` for the employee's position
+- Returns: promote, demote, or keep
+- Endpoint: `recommendation`
+- Key file: `ai.py` → `get_career_recommendation()`
 
 ---
 
@@ -120,7 +139,7 @@ new_stat = current_stat × K(role) + monthly_value
 ```
 
 - `K(role)` — decay coefficient from `ROLE_DECAY_COEFFICIENTS` in `constants.py`
-- `monthly_value` — fresh stat computed by AI (or provided manually)
+- `monthly_value` — fresh stat computed by AI from MathModel formulas (or provided manually)
 - Result clamped to 0–100
 - History stored in `stats_history` table
 

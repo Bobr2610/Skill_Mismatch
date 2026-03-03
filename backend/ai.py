@@ -140,31 +140,78 @@ def compute_activity_stats(employee_data: dict) -> dict:
     if isinstance(employee_data.get('activity_summary'), dict):
         summary = {**summary, **employee_data['activity_summary']}
     
-    prompt = f"""You are an HR analytics assistant. Based on the following developer activity summary, compute 6 stats (0-100 each) like in an RPG game.
+    prompt = f"""You are an expert HR analytics system that evaluates developer contributions using a rigorous mathematical model. You must apply the formulas and grading criteria below. When exact formula inputs are unavailable, approximate them from the provided activity data.
 
-Summary:
-- Name: {summary.get('name')}
-- Title: {summary.get('title')}
-- Role: {summary.get('role')}
-- Commits (30d): {summary.get('commits')}
-- Avg commits/day: {summary.get('avgCommitsPerDay')}
-- Active PRs: {summary.get('prsActive')}
-- Impact score: {summary.get('impactScore')}
-- Bugs resolved: {summary.get('bugsResolved')}
-- Code review participation %: {summary.get('codeReviewParticipation')}
-- Tech stack: {', '.join(summary.get('techStack', []))}
-- Primary tech: {summary.get('primaryTech')}
-- Recent commits: {'; '.join(summary.get('lastCommitTitles', []))}
+=== DEVELOPER ACTIVITY DATA ===
+Name: {summary.get('name')}
+Title: {summary.get('title')}
+Role: {summary.get('role')}
+Commits (30 days): {summary.get('commits')}
+Avg commits/day: {summary.get('avgCommitsPerDay')}
+Active PRs: {summary.get('prsActive')}
+Impact score (0-100): {summary.get('impactScore')}
+Bugs resolved (monthly): {summary.get('bugsResolved')}
+Code review participation: {summary.get('codeReviewParticipation')}%
+Tech stack: {', '.join(summary.get('techStack', []))}
+Primary technology: {summary.get('primaryTech')}
+Recent commit messages: {'; '.join(summary.get('lastCommitTitles', []))}
 
-Stats to compute (0-100 each):
-- productivity: output volume, commits, delivery speed
-- quality: code quality, bugs fixed, stability
-- collaboration: teamwork, code reviews, communication
-- reliability: consistency, meeting expectations
-- initiative: new features, docs, proactivity
-- expertise: technical depth, stack mastery
+=== MATHEMATICAL MODEL — 6 PARAMETERS (each 0-100) ===
 
-Respond ONLY with valid JSON, no other text. Example:
+1. PRODUCTIVITY (maps to "productivity")
+   Core formula: W = E / N, where E = work output (features, tickets), N = effort (time).
+   Supporting metrics:
+   - Velocity = sum of completed Story Points per sprint
+   - DORA Deployment Frequency (DF) = rate of successful releases
+   Proxy mapping: commits → E (output volume); avgCommitsPerDay → delivery rate; PRs → features delivered; impactScore → weighted output.
+   Scoring guide: avgCommitsPerDay < 0.5 → low (20-40); 0.5-2 → medium (40-65); 2-5 → good (65-85); > 5 → high (85-100). Adjust by impactScore and PR count.
+
+2. QUALITY (maps to "quality")
+   Core formulas:
+   - Defect Density = Defects / KLOC (lower is better)
+   - Technical Debt Ratio: TDR = (Remediation Cost / Development Cost) × 100%
+   - Maintainability Index: MI = max(0, (171 - 5.2·ln(HV) - 0.23·CC - 16.2·ln(LOC)) / 171 × 100)
+   - Maintainability Delta: ΔMI = MI_after - MI_before (positive = code improved)
+   Proxy mapping: bugsResolved → inverse defect density (more fixes = better quality stewardship); commit messages containing "fix", "refactor", "cleanup", "test" → positive ΔMI; ratio of fix/refactor commits to total → TDR improvement signal.
+   Scoring guide: bugsResolved 0-2 with no fix commits → low (30-45); 3-8 bugs + some fix commits → medium (50-70); > 8 bugs + frequent refactors → high (75-95).
+
+3. COLLABORATION (maps to "collaboration")
+   Core formula: Collaborative Impact CI = Σ(PR_Comments) / Lead_Time_Review
+   High CI means active, fast reviewing. Also considers cross-team communication.
+   Proxy mapping: codeReviewParticipation% → direct proxy for CI numerator; prsActive → review volume; commit messages with "review", "merge", "pair" → teamwork signal.
+   Scoring guide: codeReviewParticipation < 20% → low (25-40); 20-50% → medium (45-65); 50-80% → good (65-85); > 80% → high (85-100). Adjust by PR activity.
+
+4. RELIABILITY (maps to "reliability")
+   Core formulas:
+   - DORA Mean Time to Restore (MTTR) — lower is better
+   - DORA Change Failure Rate (CFR) = failed changes / total changes — lower is better
+   Measures consistency and stability of delivery.
+   Proxy mapping: consistency of avgCommitsPerDay (steady > spiky) → low CFR; bugsResolved relative to commits → inverse CFR; impactScore → overall dependability; commit messages with "hotfix", "revert", "rollback" → higher MTTR (negative signal).
+   Scoring guide: stable commit rate + low revert ratio → high (75-95); erratic commits or many reverts → low (30-50); role "Junior" inherently caps at ~70 unless exceptional data.
+
+5. INITIATIVE (maps to "initiative")
+   Core formula: Role Fidelity RF = (Commits_Arch + Commits_Refac) / Total_Commits
+   Higher RF means more architectural/refactoring work vs simple code.
+   Grade thresholds from model: Junior RF < 0.2; Mid RF 0.2-0.5; Senior RF > 0.5; Lead RF > 0.5 + team focus.
+   Proxy mapping: classify each commit message — "arch", "design", "migrate", "refactor", "restructure", "ci/cd", "infra", "docs", "new feature" → architectural/proactive commits; divide by total commits.
+   Scoring guide: RF < 0.1 → low (20-35); RF 0.1-0.25 → medium (40-55); RF 0.25-0.5 → good (60-80); RF > 0.5 → high (80-100).
+
+6. EXPERTISE (maps to "expertise")
+   Core formulas:
+   - Stack Versatility: SV = Σ(λ_i × Usage_i) / Required_Stack, where λ_i = weight for each technology
+   - Cognitive Agility: CA = Cycle_Time / Cyclomatic_Complexity (lower cycle time per complexity = better)
+   Proxy mapping: number of technologies in techStack → SV breadth; primaryTech presence → depth; commit messages involving complex topics ("algorithm", "optimization", "architecture", "security", "database", "API design") → high CA; role seniority modulates expectation.
+   Scoring guide: 1-2 techs + simple commits → low (30-45); 3-4 techs + moderate complexity → medium (50-70); 5+ techs or deep specialization + complex commits → high (75-95).
+
+=== GRADING CONTEXT (for calibration) ===
+Junior: high LOC/day but low RF (<0.2), high AI dependency, simple tasks.
+Mid: moderate RF (0.2-0.5), stable ΔMI ≈ 0, moderate CI.
+Senior: high RF (>0.5) from refactoring/arch work, positive ΔMI, high CI.
+Lead: maximum CI (deep reviews), high SV (cross-stack), team throughput focus.
+
+Evaluate honestly — do NOT inflate scores. Use the role as context but score based on actual data.
+
+OUTPUT: Respond ONLY with a valid JSON object, no explanation. Example:
 {{"productivity": 85, "quality": 78, "collaboration": 92, "reliability": 88, "initiative": 72, "expertise": 90}}"""
 
     try:
@@ -173,6 +220,78 @@ Respond ONLY with valid JSON, no other text. Example:
     except Exception as e:
         print(f'AI stats error: {e}')
         return {k: 50 for k in STAT_KEYS}
+
+
+def analyze_commit_contribution(commit_message: str, role: str) -> dict:
+    """
+    Analyze a single commit message and determine its contribution to 6 stats.
+    Returns dict with increments (0-5 each) for the 6 parameters.
+    """
+    if not OPENROUTER_API_KEY:
+        return {k: 1 for k in STAT_KEYS}
+
+    prompt = f"""You are an HR analytics system. Analyze ONE commit and determine how much it contributes to each of 6 developer parameters (0-5 points each).
+
+COMMIT MESSAGE: "{commit_message}"
+DEVELOPER ROLE: {role}
+
+PARAMETER DEFINITIONS (from MathModel):
+
+1. productivity — W = E/N (output per effort). Commit adds to productivity if it delivers features, closes tickets, implements functionality.
+   Keywords: "feat", "add", "implement", "create", "build", "endpoint", "page", "component"
+
+2. quality — Defect Density, TDR, ΔMI (Maintainability Delta). Commit adds to quality if it fixes bugs, improves code, adds tests, reduces tech debt.
+   Keywords: "fix", "bugfix", "test", "refactor", "cleanup", "lint", "type-safe", "validate"
+
+3. collaboration — CI = Σ(PR_Comments) / Lead_Time_Review. Commit adds to collaboration if it involves reviews, merges, pair work, documentation for others.
+   Keywords: "merge", "review", "pair", "docs", "readme", "onboarding", "shared", "common"
+
+4. reliability — DORA MTTR, CFR. Commit adds to reliability if it improves stability, monitoring, error handling, recovery.
+   Keywords: "stable", "monitor", "logging", "error handling", "fallback", "retry", "health check", "ci/cd"
+
+5. initiative — RF = (Commits_Arch + Commits_Refac) / Total. Commit adds to initiative if it's architectural, migration, proactive improvement, new tooling.
+   Keywords: "arch", "migrate", "restructure", "infra", "upgrade", "design", "rfc", "proposal", "ci", "docker"
+
+6. expertise — SV (Stack Versatility), CA (Cognitive Agility). Commit adds to expertise if it shows deep technical knowledge, complex algorithms, multi-stack work.
+   Keywords: "algorithm", "optimize", "security", "database", "api design", "performance", "cache", "concurrency"
+
+RULES:
+- Each parameter: 0 (not related) to 5 (strongly related)
+- Most commits affect 2-3 parameters, NOT all 6
+- A simple typo fix = low across all (maybe quality: 1)
+- A major feature = productivity: 4-5, maybe expertise: 2-3
+- A complex refactor = quality: 4-5, initiative: 3-4
+- Be precise, not generous
+
+Respond ONLY with JSON. Example: {{"productivity": 3, "quality": 1, "collaboration": 0, "reliability": 0, "initiative": 2, "expertise": 1}}"""
+
+    try:
+        content = _call_openrouter(prompt, max_tokens=256)
+        if not content:
+            return {k: 1 for k in STAT_KEYS}
+        return _parse_commit_increments(content)
+    except Exception as e:
+        print(f'AI commit analysis error: {e}')
+        return {k: 1 for k in STAT_KEYS}
+
+
+def _parse_commit_increments(response_text: str) -> dict:
+    """Parse AI response for commit increments (0-5 each)."""
+    text = response_text.strip()
+    if '```' in text:
+        match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', text)
+        if match:
+            text = match.group(1)
+    match = re.search(r'\{[^{}]*(?:"productivity"|"quality")[^{}]*\}', text, re.DOTALL)
+    if not match:
+        match = re.search(r'\{[\s\S]*\}', text)
+    if match:
+        try:
+            data = json.loads(match.group())
+            return {k: min(5, max(0, int(data.get(k, 0)))) for k in STAT_KEYS}
+        except (json.JSONDecodeError, ValueError):
+            pass
+    return {k: 1 for k in STAT_KEYS}
 
 
 def _get_role_for_requirements(role: str) -> str:
@@ -201,23 +320,37 @@ def get_career_recommendation(activity_stats: dict, title: str, role: str) -> di
     role_level = _get_role_for_requirements(role)
     requirements = ROLE_REQUIREMENTS.get(role_level, ROLE_REQUIREMENTS["Mid"])
 
-    prompt = f"""Compare employee stats against position requirements. Return promote, demote, or keep.
+    prompt = f"""You are an HR analytics system using a mathematical model to evaluate developer grading.
 
-POSITION: {role_level} ({title or role_level})
-Requirements for this position (minimum):
-- productivity: {requirements['productivity']}, quality: {requirements['quality']}, collaboration: {requirements['collaboration']}
-- reliability: {requirements['reliability']}, initiative: {requirements['initiative']}, expertise: {requirements['expertise']}
+The 6 stats below were computed from these formulas:
+- productivity ← W = E/N (output/effort), DORA Deployment Frequency
+- quality ← Defect Density, TDR, Maintainability Delta (ΔMI = MI_after - MI_before)
+- collaboration ← Collaborative Impact CI = Σ(PR_Comments) / Lead_Time_Review
+- reliability ← DORA MTTR, Change Failure Rate
+- initiative ← Role Fidelity RF = (Commits_Arch + Commits_Refac) / Total_Commits
+- expertise ← Stack Versatility SV = Σ(λ_i·Usage_i)/Required_Stack, Cognitive Agility CA
 
-EMPLOYEE STATS (actual):
-- productivity: {params['productivity']}, quality: {params['quality']}, collaboration: {params['collaboration']}
-- reliability: {params['reliability']}, initiative: {params['initiative']}, expertise: {params['expertise']}
+Grade expectations from the model:
+- Junior: RF < 0.2, low CI, ΔMI ≈ 0 or negative → stats typically 30-50
+- Mid: RF 0.2-0.5, stable ΔMI ≈ 0, moderate CI → stats typically 50-65
+- Senior: RF > 0.5, positive ΔMI, high CI → stats typically 65-80
+- Lead: max CI (deep reviews), high SV (cross-stack), team throughput → stats typically 80-95
 
-RULES:
-- promote: stats clearly exceed requirements (e.g. most ≥ requirements + 15)
-- demote: stats below requirements (e.g. several ≥ 10 below)
-- keep: stats roughly match requirements
+CURRENT POSITION: {role_level} ({title or role_level})
+REQUIREMENTS for {role_level} (minimum threshold):
+  productivity: {requirements['productivity']}, quality: {requirements['quality']}, collaboration: {requirements['collaboration']}
+  reliability: {requirements['reliability']}, initiative: {requirements['initiative']}, expertise: {requirements['expertise']}
 
-Respond ONLY with JSON: {{"action": "promote"|"demote"|"keep", "reason": "brief explanation"}}"""
+EMPLOYEE ACTUAL STATS:
+  productivity: {params['productivity']}, quality: {params['quality']}, collaboration: {params['collaboration']}
+  reliability: {params['reliability']}, initiative: {params['initiative']}, expertise: {params['expertise']}
+
+DECISION RULES:
+- "promote": most stats exceed requirements by ≥ 15 points, indicating the employee operates at the next grade level
+- "demote": several stats fall ≥ 10 below requirements, indicating the employee underperforms for current position
+- "keep": stats roughly match requirements (within ±10-15 of thresholds)
+
+Respond ONLY with JSON: {{"action": "promote"|"demote"|"keep", "reason": "brief explanation referencing specific stats"}}"""
 
     try:
         content = _call_openrouter(prompt)

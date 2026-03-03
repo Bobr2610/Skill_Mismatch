@@ -144,6 +144,35 @@ const API = {
     });
   },
 
+  async commitContribution(id, commitMessage) {
+    const res = await fetch(`${this.baseUrl}/employees/${encodeURIComponent(id)}/commit-contribution`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ commitMessage }),
+    });
+    if (!res.ok) throw new Error('Failed to analyze commit');
+    this.invalidateCache();
+    return res.json();
+  },
+
+  async monthlyDecay(id) {
+    const res = await fetch(`${this.baseUrl}/employees/${encodeURIComponent(id)}/monthly-decay`, {
+      method: 'POST',
+    });
+    if (!res.ok) throw new Error('Failed to apply monthly decay');
+    this.invalidateCache();
+    return res.json();
+  },
+
+  async monthlyDecayAll() {
+    const res = await fetch(`${this.baseUrl}/employees/monthly-decay-all`, {
+      method: 'POST',
+    });
+    if (!res.ok) throw new Error('Failed to apply monthly decay to all');
+    this.invalidateCache();
+    return res.json();
+  },
+
   async getDecayCoefficients() {
     return this._cached('decay-coefficients', async () => {
       const res = await fetch(`${this.baseUrl}/decay-coefficients`);
