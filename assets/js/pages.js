@@ -47,33 +47,73 @@ const Pages = {
     this._setText('kpi-deploy', (kpis.deploymentFreq ?? 0) + ' / day');
     this._setText('kpi-deploy-trend', kpis.deploymentFreqTrend ?? '');
 
-    Charts.renderCommitsChart(db.commitsOverTime || [], 'commits-chart');
+    // Try loading the GitHub-style contributors chart; fall back to simple area chart
+    let ghContributors = null;
+    try {
+      ghContributors = await API.getGitHubContributors();
+    } catch {}
+
+    if (ghContributors?.length) {
+      Charts.renderContributorsChart(ghContributors, 'commits-chart', 'chart-dates');
+      const chartTitle = document.querySelector('[data-i18n="dashboard.commits_chart"]');
+      const chartDesc = document.querySelector('[data-i18n="dashboard.chart_desc"]');
+      if (chartTitle) chartTitle.textContent = i18n.t('dashboard.gh_activity');
+      if (chartDesc) chartDesc.textContent = i18n.t('dashboard.gh_activity_desc');
+    } else {
+      Charts.renderCommitsChart(db.commitsOverTime || [], 'commits-chart');
+    }
 
     const tbody = document.getElementById('contributors-tbody');
-    if (tbody && db.employees?.length) {
-      const sorted = [...db.employees].sort((a, b) => (b.impactScore || 0) - (a.impactScore || 0)).slice(0, 4);
-      tbody.innerHTML = sorted
-        .map(
-          (e) => `
-        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-          <td class="px-6 py-4 flex items-center gap-3">
-            <div class="size-8 rounded-full bg-slate-200 dark:bg-slate-700 bg-cover" style="background-image: url('${e.avatar || ''}')"></div>
-            <a href="profile.html?id=${e.id}" class="font-semibold text-slate-900 dark:text-white hover:text-primary">${e.name}</a>
-          </td>
-          <td class="px-6 py-4">${e.commits ?? 0}</td>
-          <td class="px-6 py-4">${e.prsActive ?? 0}</td>
-          <td class="px-6 py-4">
-            <div class="flex items-center gap-2">
-              <div class="w-16 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                <div class="bg-primary h-full" style="width: ${e.impactScore ?? 0}%"></div>
+    if (tbody) {
+      if (ghContributors?.length) {
+        const topGh = ghContributors.slice(0, 6);
+        const maxCommits = topGh[0]?.total || 1;
+        tbody.innerHTML = topGh
+          .map((c) => {
+            const pct = Math.round(((c.total || 0) / maxCommits) * 100);
+            return `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+            <td class="px-6 py-4 flex items-center gap-3">
+              <img src="${c.avatar || ''}" alt="${c.login}" class="size-8 rounded-full bg-slate-200 dark:bg-slate-700" onerror="this.style.display='none'">
+              <a href="https://github.com/${c.login}" target="_blank" rel="noopener" class="font-semibold text-slate-900 dark:text-white hover:text-primary">${c.login}</a>
+            </td>
+            <td class="px-6 py-4">${(c.total ?? 0).toLocaleString()}</td>
+            <td class="px-6 py-4">—</td>
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-2">
+                <div class="w-16 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div class="bg-primary h-full" style="width: ${pct}%"></div>
+                </div>
+                <span class="text-xs font-medium">${pct}%</span>
               </div>
-              <span class="text-xs font-medium">${e.impactScore ?? 0}%</span>
-            </div>
-          </td>
-        </tr>
-      `
-        )
-        .join('');
+            </td>
+          </tr>`;
+          })
+          .join('');
+      } else if (db.employees?.length) {
+        const sorted = [...db.employees].sort((a, b) => (b.impactScore || 0) - (a.impactScore || 0)).slice(0, 4);
+        tbody.innerHTML = sorted
+          .map(
+            (e) => `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+            <td class="px-6 py-4 flex items-center gap-3">
+              <div class="size-8 rounded-full bg-slate-200 dark:bg-slate-700 bg-cover" style="background-image: url('${e.avatar || ''}')"></div>
+              <a href="profile.html?id=${e.id}" class="font-semibold text-slate-900 dark:text-white hover:text-primary">${e.name}</a>
+            </td>
+            <td class="px-6 py-4">${e.commits ?? 0}</td>
+            <td class="px-6 py-4">${e.prsActive ?? 0}</td>
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-2">
+                <div class="w-16 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div class="bg-primary h-full" style="width: ${e.impactScore ?? 0}%"></div>
+                </div>
+                <span class="text-xs font-medium">${e.impactScore ?? 0}%</span>
+              </div>
+            </td>
+          </tr>`
+          )
+          .join('');
+      }
     }
 
     this._renderActivity(5);
@@ -82,18 +122,24 @@ const Pages = {
     const releasesBtn = document.getElementById('chart-btn-releases');
     const commitsData = db.commitsOverTime || [];
     const releasesData = commitsData.map((v) => Math.max(0, Math.floor(v * 0.15) + (v % 3)));
+    const activeBtn = 'px-3 py-1.5 text-xs font-semibold bg-primary text-white rounded-lg';
+    const inactiveBtn = 'px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg';
     if (commitsBtn) {
       commitsBtn.addEventListener('click', () => {
-        Charts.renderCommitsChart(commitsData, 'commits-chart');
-        commitsBtn.className = 'px-3 py-1.5 text-xs font-semibold bg-primary text-white rounded-lg';
-        if (releasesBtn) releasesBtn.className = 'px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg';
+        if (ghContributors?.length) {
+          Charts.renderContributorsChart(ghContributors, 'commits-chart', 'chart-dates');
+        } else {
+          Charts.renderCommitsChart(commitsData, 'commits-chart');
+        }
+        commitsBtn.className = activeBtn;
+        if (releasesBtn) releasesBtn.className = inactiveBtn;
       });
     }
     if (releasesBtn) {
       releasesBtn.addEventListener('click', () => {
         Charts.renderReleasesChart(releasesData, 'commits-chart');
-        releasesBtn.className = 'px-3 py-1.5 text-xs font-semibold bg-primary text-white rounded-lg';
-        if (commitsBtn) commitsBtn.className = 'px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg';
+        releasesBtn.className = activeBtn;
+        if (commitsBtn) commitsBtn.className = inactiveBtn;
       });
     }
 
@@ -160,7 +206,7 @@ const Pages = {
 
   async initProfile() {
     const params = new URLSearchParams(window.location.search);
-    const id = params.get('id') || (typeof Storage !== 'undefined' && Storage.getLastProfile()) || 'alex-rivers';
+    const id = params.get('id') || (typeof Storage !== 'undefined' && Storage.getLastProfile()) || 'belyanskiy-kirill';
     if (typeof Storage !== 'undefined') Storage.setLastProfile(id);
     let emp;
     try {
@@ -221,6 +267,70 @@ const Pages = {
         commitsEl.innerHTML = `<p class="text-slate-500 dark:text-slate-400 text-sm p-4">${i18n.t('profile.no_activity')}</p>`;
       }
     }
+
+    const coefficients = { Junior: 0.4, Mid: 0.5, Senior: 0.6, Staff: 0.7, Lead: 0.75 };
+    try {
+      const fetchedCoeffs = await API.getDecayCoefficients();
+      Object.assign(coefficients, fetchedCoeffs);
+    } catch {}
+    const empRole = (emp.role || 'Mid').trim();
+    const matchedRole = Object.keys(coefficients).find(k => empRole.toLowerCase().includes(k.toLowerCase())) || 'Mid';
+    const K = coefficients[matchedRole] || 0.5;
+    this._setText('green-coefficient', `K(${matchedRole}) = ${K}`);
+    if (emp.lastRecalculation) {
+      this._setText('green-last-recalc', `${i18n.t('profile.last_recalc')}: ${emp.lastRecalculation}`);
+    }
+
+    const greenBtn = document.getElementById('green-recalc-btn');
+    const greenResult = document.getElementById('green-result');
+    const greenTitle = document.getElementById('green-result-title');
+    const greenDetails = document.getElementById('green-result-details');
+    if (greenBtn && greenResult && greenTitle && greenDetails) {
+      greenBtn.onclick = async () => {
+        greenBtn.disabled = true;
+        greenBtn.innerHTML = `<span class="material-symbols-outlined text-lg animate-spin">progress_activity</span> ${i18n.t('profile.green_computing')}`;
+        try {
+          const res = await API.monthlyRecalculate(id);
+          greenResult.classList.remove('hidden');
+          greenTitle.textContent = `${i18n.t('profile.green_done')} (K=${res.coefficient})`;
+          const statLabels = {
+            productivity: i18n.t('stats.productivity'),
+            quality: i18n.t('stats.quality'),
+            collaboration: i18n.t('stats.collaboration'),
+            reliability: i18n.t('stats.reliability'),
+            initiative: i18n.t('stats.initiative'),
+            expertise: i18n.t('stats.expertise'),
+          };
+          greenDetails.innerHTML = Object.keys(statLabels).map(k => {
+            const before = res.statsBefore?.[k] ?? '?';
+            const mv = res.monthlyValue?.[k] ?? '?';
+            const after = res.activityStats?.[k] ?? '?';
+            const diff = after - before;
+            const diffColor = diff > 0 ? 'text-emerald-500' : diff < 0 ? 'text-red-500' : 'text-slate-400';
+            const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
+            return `<div class="flex justify-between"><span>${statLabels[k]}</span><span>${before} × ${res.coefficient} + ${mv} = <span class="font-bold">${after}</span> <span class="${diffColor}">(${diffStr})</span></span></div>`;
+          }).join('');
+
+          Charts.renderActivityStatsRadar(res.activityStats, 'activity-stats-radar');
+          for (const [k, elId] of [['productivity','stat-prod'],['quality','stat-quality'],['collaboration','stat-collab'],['reliability','stat-reliab'],['initiative','stat-init'],['expertise','stat-expert']]) {
+            this._setText(elId, (res.activityStats[k] ?? 50) + '/100');
+          }
+          this._setText('green-last-recalc', `${i18n.t('profile.last_recalc')}: ${res.month}`);
+
+          this._loadStatsHistory(id);
+        } catch (e) {
+          console.error(e);
+          greenResult.classList.remove('hidden');
+          greenTitle.textContent = i18n.t('rec.error');
+          greenTitle.className = 'font-bold text-sm text-red-500 mb-2';
+          greenDetails.textContent = e.message;
+        }
+        greenBtn.disabled = false;
+        greenBtn.innerHTML = `<span class="material-symbols-outlined text-lg">autorenew</span> <span>${i18n.t('profile.green_recalc')}</span>`;
+      };
+    }
+
+    this._loadStatsHistory(id);
 
     const recBtn = document.getElementById('recommendation-btn');
     const recResult = document.getElementById('recommendation-result');
@@ -410,6 +520,38 @@ const Pages = {
       </div>
     `;
     Charts.renderComparisonRadar(stats1, stats2, 'comparison-radar-inner', emp1.name, emp2.name);
+  },
+
+  async _loadStatsHistory(employeeId) {
+    const el = document.getElementById('stats-history');
+    if (!el) return;
+    try {
+      const history = await API.getStatsHistory(employeeId);
+      if (!history?.length) {
+        el.innerHTML = `<p class="text-slate-500 dark:text-slate-400 text-xs">${i18n.t('profile.no_history')}</p>`;
+        return;
+      }
+      el.innerHTML = history.map(h => {
+        const after = h.statsAfter || {};
+        const avg = Object.values(after).length
+          ? Math.round(Object.values(after).reduce((a, b) => a + b, 0) / Object.values(after).length)
+          : 0;
+        return `
+          <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-xs font-bold text-slate-900 dark:text-slate-100">${h.month}</span>
+              <span class="text-[10px] font-semibold text-primary">K=${h.decayCoefficient}</span>
+            </div>
+            <div class="flex justify-between text-[10px] text-slate-500 dark:text-slate-400">
+              <span>${i18n.t('profile.avg_score')}: ${avg}/100</span>
+              <span>${h.createdAt ? new Date(h.createdAt).toLocaleDateString() : ''}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch {
+      el.innerHTML = `<p class="text-slate-500 dark:text-slate-400 text-xs">${i18n.t('profile.no_history')}</p>`;
+    }
   },
 
   _updateComparisonUrl(id1, id2) {

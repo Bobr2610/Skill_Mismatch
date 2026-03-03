@@ -40,7 +40,7 @@ const Charts = {
   },
 
   /**
-   * Render commits-over-time area chart
+   * Render commits-over-time area chart (fallback when no GitHub data)
    * @param {number[]} data - daily commit counts
    * @param {string} containerId - DOM element id
    */
@@ -48,45 +48,132 @@ const Charts = {
     const container = document.getElementById(containerId);
     if (!container || !data?.length) return;
 
-    const w = 800;
-    const h = 200;
-    const padding = { top: 20, right: 20, bottom: 30, left: 20 };
-    const max = Math.max(...data);
-    const min = Math.min(...data);
-    const range = max - min || 1;
+    const w = 800, h = 180;
+    const padding = { top: 10, right: 10, bottom: 5, left: 10 };
+    const max = Math.max(...data, 1);
     const chartH = h - padding.top - padding.bottom;
     const chartW = w - padding.left - padding.right;
-    const stepX = chartW / (data.length - 1);
+    const stepX = chartW / (data.length - 1 || 1);
 
-    let pathD = '';
-    let areaD = '';
-
+    let pathD = '', areaD = `M ${padding.left} ${h - padding.bottom}`;
     data.forEach((val, i) => {
       const x = padding.left + i * stepX;
-      const y = padding.top + chartH - ((val - min) / range) * chartH;
-      if (i === 0) {
-        pathD = `M ${x} ${y}`;
-        areaD = `M ${x} ${h - padding.bottom}`;
-      } else {
-        pathD += ` L ${x} ${y}`;
-        areaD += ` L ${x} ${y}`;
-      }
+      const y = padding.top + chartH - (val / max) * chartH;
+      if (i === 0) { pathD = `M ${x} ${y}`; areaD += ` L ${x} ${y}`; }
+      else { pathD += ` L ${x} ${y}`; areaD += ` L ${x} ${y}`; }
     });
-
     areaD += ` L ${padding.left + (data.length - 1) * stepX} ${h - padding.bottom} Z`;
 
     container.innerHTML = `
       <svg class="w-full h-full" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="chartGradient" x1="0%" x2="0%" y1="0%" y2="100%">
-            <stop offset="0%" stop-color="#135bec" stop-opacity="0.3"></stop>
-            <stop offset="100%" stop-color="#135bec" stop-opacity="0"></stop>
-          </linearGradient>
-        </defs>
-        <path d="${areaD}" fill="url(#chartGradient)"></path>
-        <path d="${pathD}" fill="none" stroke="#135bec" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
-      </svg>
-    `;
+        <defs><linearGradient id="cg" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#135bec" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="#135bec" stop-opacity="0"/>
+        </linearGradient></defs>
+        <path d="${areaD}" fill="url(#cg)"/>
+        <path d="${pathD}" fill="none" stroke="#135bec" stroke-width="2" stroke-linejoin="round"/>
+      </svg>`;
+  },
+
+  /**
+   * Render GitHub-style Contributors chart — per-contributor area charts
+   * @param {Array} contributors - [{login, avatar, total, weeks: [{w, c}]}]
+   * @param {string} containerId - DOM element id
+   * @param {string} [datesContainerId] - optional element for date labels
+   */
+  renderContributorsChart(contributors, containerId, datesContainerId) {
+    const container = document.getElementById(containerId);
+    if (!container || !contributors?.length) return;
+
+    const colors = ['#2da44e', '#0969da', '#cf222e', '#8250df', '#bf8700', '#1a7f37', '#0550ae', '#a40e26'];
+    let html = '';
+
+    // Combined totals chart (all contributors summed per week)
+    const weekCount = contributors[0].weeks?.length || 0;
+    if (weekCount) {
+      const totalPerWeek = new Array(weekCount).fill(0);
+      let grandTotal = 0;
+      contributors.forEach(c => {
+        grandTotal += c.total || 0;
+        (c.weeks || []).forEach((w, i) => { totalPerWeek[i] += w.c || 0; });
+      });
+      const totalSvg = this._contributorAreaSvg(totalPerWeek, 800, 100, '#57606a');
+      html += `
+        <div class="mb-2">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-bold text-slate-900 dark:text-white">${i18n.t('dashboard.gh_total')}</span>
+            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">${grandTotal.toLocaleString()} commits</span>
+          </div>
+          <div class="w-full" style="height:100px">${totalSvg}</div>
+        </div>`;
+    }
+
+    contributors.forEach((contrib, idx) => {
+      const weekCommits = (contrib.weeks || []).map(w => w.c || 0);
+      if (!weekCommits.length) return;
+
+      const color = colors[idx % colors.length];
+      const chartSvg = this._contributorAreaSvg(weekCommits, 800, 80, color);
+
+      html += `
+        <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-2">
+              <img src="${contrib.avatar || ''}" alt="${contrib.login}" class="size-6 rounded-full border border-slate-200 dark:border-slate-700" onerror="this.style.display='none'">
+              <a href="https://github.com/${contrib.login}" target="_blank" rel="noopener"
+                 class="text-sm font-semibold text-slate-900 dark:text-white hover:text-primary transition-colors">${contrib.login}</a>
+            </div>
+            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">${(contrib.total || 0).toLocaleString()} commits</span>
+          </div>
+          <div class="w-full" style="height:80px">${chartSvg}</div>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+
+    if (datesContainerId && contributors[0]?.weeks?.length) {
+      const datesEl = document.getElementById(datesContainerId);
+      if (datesEl) {
+        const weeks = contributors[0].weeks;
+        const step = Math.max(1, Math.floor(weeks.length / 6));
+        const labels = [];
+        for (let i = 0; i < weeks.length; i += step) {
+          const d = new Date(weeks[i].w * 1000);
+          const mo = d.toLocaleString('en', { month: 'short' });
+          const yr = String(d.getFullYear()).slice(2);
+          labels.push(`${mo} '${yr}`);
+        }
+        datesEl.innerHTML = labels.map(l => `<span>${l}</span>`).join('');
+      }
+    }
+  },
+
+  _contributorAreaSvg(data, w, h, color) {
+    if (!data?.length) return '';
+    const pad = { top: 4, right: 4, bottom: 4, left: 4 };
+    const max = Math.max(...data, 1);
+    const cH = h - pad.top - pad.bottom;
+    const cW = w - pad.left - pad.right;
+    const step = cW / (data.length - 1 || 1);
+    const uid = 'ca' + Math.random().toString(36).slice(2, 7);
+
+    let line = '', area = `M ${pad.left} ${h - pad.bottom}`;
+    data.forEach((v, i) => {
+      const x = pad.left + i * step;
+      const y = pad.top + cH - (v / max) * cH;
+      if (i === 0) { line = `M ${x} ${y}`; area += ` L ${x} ${y}`; }
+      else { line += ` L ${x} ${y}`; area += ` L ${x} ${y}`; }
+    });
+    area += ` L ${pad.left + (data.length - 1) * step} ${h - pad.bottom} Z`;
+
+    return `<svg class="w-full h-full" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <defs><linearGradient id="${uid}" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.4"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0.03"/>
+      </linearGradient></defs>
+      <path d="${area}" fill="url(#${uid})"/>
+      <path d="${line}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>`;
   },
 
   /**

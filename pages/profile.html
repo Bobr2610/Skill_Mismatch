@@ -161,6 +161,26 @@
           </div>
           <div class="space-y-8">
             <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+              <h3 class="text-slate-900 dark:text-slate-100 font-bold mb-4" data-i18n="profile.green_title">Monthly Recalculation (Green)</h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-1" data-i18n="profile.green_desc">new = current × K(role) + monthly value</p>
+              <p id="green-coefficient" class="text-[11px] text-primary font-semibold mb-3"></p>
+              <p id="green-last-recalc" class="text-[10px] text-slate-400 mb-3"></p>
+              <button id="green-recalc-btn" class="w-full px-4 py-2 text-sm font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg hover:bg-emerald-500/20 transition-colors flex items-center justify-center gap-2 mb-4">
+                <span class="material-symbols-outlined text-lg">autorenew</span>
+                <span data-i18n="profile.green_recalc">Recalculate (Green)</span>
+              </button>
+              <div id="green-result" class="hidden rounded-lg p-4 border border-slate-200 dark:border-slate-700 space-y-2">
+                <div id="green-result-title" class="font-bold text-sm text-emerald-600 dark:text-emerald-400 mb-2"></div>
+                <div id="green-result-details" class="text-xs text-slate-600 dark:text-slate-400 space-y-1"></div>
+              </div>
+            </div>
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+              <h3 class="text-slate-900 dark:text-slate-100 font-bold mb-4" data-i18n="profile.stats_history">Stats History</h3>
+              <div id="stats-history" class="space-y-3 max-h-[300px] overflow-y-auto">
+                <p class="text-slate-500 dark:text-slate-400 text-xs" data-i18n="profile.no_history">No history yet</p>
+              </div>
+            </div>
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
               <h3 class="text-slate-900 dark:text-slate-100 font-bold mb-4" data-i18n="profile.ai_title">AI Career Recommendation</h3>
               <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3" data-i18n="profile.ai_desc">Based on 6 stats and position: promote, demote, or keep</p>
               <button id="recommendation-btn" class="w-full px-4 py-2 text-sm font-semibold bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors flex items-center justify-center gap-2 mb-4">
@@ -204,31 +224,13 @@
             <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
               <h3 class="text-slate-900 dark:text-slate-100 font-bold mb-4" data-i18n="profile.tech_stack">Core Technology Stack</h3>
               <div id="tech-stack" class="flex flex-wrap gap-2">
-                <span class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700">Python</span>
-                <span class="px-3 py-1 bg-primary/10 text-primary rounded-lg text-xs font-bold border border-primary/20">Go (Golang)</span>
-                <span class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700">PostgreSQL</span>
-                <span class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700">Redis</span>
-                <span class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700">Kubernetes</span>
-                <span class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700">gRPC</span>
+                <div class="skeleton skeleton-block h-8 w-full"></div>
               </div>
             </div>
             <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
               <h3 class="text-slate-900 dark:text-slate-100 font-bold mb-4" data-i18n="profile.collaborators">Top Collaborators</h3>
               <div id="collaborators" class="space-y-4">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3">
-                    <div class="size-8 rounded-full bg-slate-200 dark:bg-slate-700 bg-center bg-cover" style="background-image: url('https://ui-avatars.com/api/?name=Sarah+Chen&background=135bec&color=fff')"></div>
-                    <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Sarah Chen</span>
-                  </div>
-                  <span class="text-[10px] font-bold text-slate-400">124 PR reviews</span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3">
-                    <div class="size-8 rounded-full bg-slate-200 dark:bg-slate-700 bg-center bg-cover" style="background-image: url('https://ui-avatars.com/api/?name=Michael+Ross&background=135bec&color=fff')"></div>
-                    <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Michael Ross</span>
-                  </div>
-                  <span class="text-[10px] font-bold text-slate-400">89 PR reviews</span>
-                </div>
+                <div class="skeleton skeleton-block h-16"></div>
               </div>
             </div>
           </div>

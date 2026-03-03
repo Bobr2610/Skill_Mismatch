@@ -102,4 +102,47 @@ const API = {
     if (!res.ok) throw new Error('Failed to get recommendation');
     return res.json();
   },
+
+  async monthlyRecalculate(id, monthlyValue) {
+    const body = monthlyValue ? { monthlyValue } : {};
+    const res = await fetch(`${this.baseUrl}/employees/${encodeURIComponent(id)}/monthly-recalculate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error('Failed to recalculate');
+    this.invalidateCache();
+    return res.json();
+  },
+
+  async recalculateAll() {
+    const res = await fetch(`${this.baseUrl}/employees/recalculate-all`, {
+      method: 'POST',
+    });
+    if (!res.ok) throw new Error('Failed to recalculate all');
+    this.invalidateCache();
+    return res.json();
+  },
+
+  async getStatsHistory(id) {
+    const res = await fetch(`${this.baseUrl}/employees/${encodeURIComponent(id)}/stats-history`);
+    if (!res.ok) throw new Error('Failed to fetch stats history');
+    return res.json();
+  },
+
+  async getGitHubContributors() {
+    return this._cached('github-contributors', async () => {
+      const res = await fetch(`${this.baseUrl}/github/contributors`);
+      if (!res.ok) throw new Error('Failed to fetch GitHub contributors');
+      return res.json();
+    });
+  },
+
+  async getDecayCoefficients() {
+    return this._cached('decay-coefficients', async () => {
+      const res = await fetch(`${this.baseUrl}/decay-coefficients`);
+      if (!res.ok) throw new Error('Failed to fetch coefficients');
+      return res.json();
+    });
+  },
 };

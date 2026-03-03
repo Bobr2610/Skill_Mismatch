@@ -3,6 +3,18 @@ Application constants — activity types, icons, defaults
 Single source of truth for backend data structures
 """
 
+# Green's principle decay coefficients per role.
+# Formula: new_stat = current_stat * K + monthly_value
+# Higher K means old score carries more weight (slower decay).
+# Equilibrium: monthly_value / (1 - K)
+ROLE_DECAY_COEFFICIENTS = {
+    "Junior": 0.4,
+    "Mid": 0.5,
+    "Senior": 0.6,
+    "Staff": 0.7,
+    "Lead": 0.75,
+}
+
 # Role hierarchy and minimum stats (0-100) required for the position
 # Used for AI career recommendation
 ROLE_REQUIREMENTS = {

@@ -128,10 +128,8 @@
                   <button id="chart-btn-releases" class="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" data-i18n="dashboard.btn_releases">Releases</button>
                 </div>
               </div>
-              <div id="commits-chart" class="h-64 w-full relative"></div>
-              <div class="flex justify-between mt-4 text-xs text-slate-400 font-medium">
-                <span>Aug 01</span><span>Aug 07</span><span>Aug 14</span><span>Aug 21</span><span>Aug 28</span><span>Sep 01</span>
-              </div>
+              <div id="commits-chart" class="w-full relative"></div>
+              <div id="chart-dates" class="flex justify-between mt-4 text-xs text-slate-400 font-medium"></div>
             </div>
             <div class="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
               <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
@@ -157,17 +155,7 @@
             <div class="bg-white dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm h-full">
               <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6" data-i18n="dashboard.recent_activity">Recent Activity</h3>
               <div id="recent-activity" class="space-y-6">
-                <div class="flex gap-4">
-                  <div class="relative shrink-0">
-                    <div class="size-10 rounded-full bg-slate-200 dark:bg-slate-700 bg-cover" style="background-image: url('https://ui-avatars.com/api/?name=Sarah+Chen&background=10b981&color=fff')"></div>
-                    <div class="absolute -bottom-1 -right-1 size-5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center"><span class="material-symbols-outlined text-[12px] text-white font-bold">commit</span></div>
-                  </div>
-                  <div class="flex-1">
-                    <p class="text-sm font-medium text-slate-900 dark:text-white">Sarah Chen committed to <span class="text-primary font-semibold">main</span></p>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 italic">"feat: optimize data fetching hooks for dashboard widgets"</p>
-                    <p class="text-[10px] text-slate-400 mt-1">2 minutes ago</p>
-                  </div>
-                </div>
+                <div class="skeleton skeleton-block h-24"></div>
               </div>
               <button id="load-more-activity" class="w-full mt-8 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" data-i18n="dashboard.load_more">Load More Activity</button>
             </div>
