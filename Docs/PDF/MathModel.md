@@ -95,7 +95,7 @@ $$
 | **Stack Versatility** ($SV$) | $SV = \frac{\sum (\lambda_i \times Usage_i)}{Required\_Stack}$ | Git Linguist, расширения файлов |
 | **AI Orchestration** ($AQ$) | $AQ = Acceptance\_Rate - Code\_Churn_{AI}$ | API ИИ-ассистента (Copilot/Cursor) |
 | **Role Fidelity** ($RF$) | $RF = \frac{Commits_{Arch} + Commits_{Refac}}{Total\ Commits}$ | Классификация коммитов (NLP-анализ) |
-| **Cognitive Agility** ($CA$) | $CA = \frac{Cycle\ Time}{Cyclomatic\ Complexity}$ | Jira API + SonarQube ($CC$) |
+| **Cognitive Agility** ($CA$) | $CA = \frac{Cyclomatic\ Complexity}{Cycle\ Time}$ | Jira API + SonarQube ($CC$) |
 | **Collab. Impact** ($CI$) | $CI = \frac{\sum Comments_{PR}}{Lead\ Time_{Review}}$ | Git PR Metadata (ревью коллег) |
 | **Maintainability Delta** ($\Delta MI$) | $\Delta MI = MI_{after} - MI_{before}$ | SonarQube / Visual Studio Metrics |
 

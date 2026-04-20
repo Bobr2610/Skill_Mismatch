@@ -139,7 +139,7 @@ $$TE = \frac{\sum passed_i}{\sum total_i} \times 100$$
 - $\Delta MI = MI_{post} - MI_{pre}$ — Maintainability Delta
 - $CI = \frac{\sum Comments}{LeadTime_{avg}}$ — Collaboration Impact
 - $RF = \frac{Commits_{architectural} + Commits_{refactoring}}{TotalCommits}$ — Role Fidelity
-- $CA = \frac{CycleTime}{CyclomaticComplexity_{avg}}$ — Cognitive Agility
+- $CA = \frac{CyclomaticComplexity_{avg}}{CycleTime}$ — Cognitive Agility
 - $W = \frac{E_{completed}}{N_{planned}}$ — Productivity Index
 
 ## 9.5. Алгоритмическая реализация

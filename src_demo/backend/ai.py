@@ -199,7 +199,7 @@ Recent commit messages: {'; '.join(summary.get('lastCommitTitles', []))}
 6. EXPERTISE (maps to "expertise")
    Core formulas:
    - Stack Versatility: SV = Σ(λ_i × Usage_i) / Required_Stack, where λ_i = weight for each technology
-   - Cognitive Agility: CA = Cycle_Time / Cyclomatic_Complexity (lower cycle time per complexity = better)
+   - Cognitive Agility: CA = Cyclomatic_Complexity / Cycle_Time (lower cycle time for complexity = better)
    Proxy mapping: number of technologies in techStack → SV breadth; primaryTech presence → depth; commit messages involving complex topics ("algorithm", "optimization", "architecture", "security", "database", "API design") → high CA; role seniority modulates expectation.
    Scoring guide: 1-2 techs + simple commits → low (30-45); 3-4 techs + moderate complexity → medium (50-70); 5+ techs or deep specialization + complex commits → high (75-95).
 
