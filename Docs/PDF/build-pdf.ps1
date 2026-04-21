@@ -40,9 +40,9 @@ function Build-Report {
         -V lang=ru `
         -V babel-lang=russian `
         -V 'papersize=a4' `
-        -V 'header-includes=\usepackage{titlesec}\titleformat{\chapter}{\Large\bfseries}{\thechapter.}{0.5em}{}\titlespacing*{\chapter}{0pt}{0pt}{20pt}\titleformat{\section}{\Large\bfseries}{\thesection.}{0.5em}{}\titlespacing*{\section}{0pt}{20pt}{10pt}\titleformat{\subsection}{\large\bfseries}{\thesubsection.}{0.5em}{}\titlespacing*{\subsection}{0pt}{15pt}{5pt}\pagestyle{plain}' `
+        -V 'header-includes=\usepackage{titlesec}\usepackage{tikz}\usepackage{pgfplots}\usepgfplotslibrary{fillbetween}\pgfplotsset{compat=1.18, every axis/.append style={font=\sffamily, axis line style={draw=gray!50, thick}, tick style={draw=gray!50}, ymajorgrids=true, grid style={gray!20, line width=0.8pt}, legend style={draw=white!90!black, fill=white, font=\small}, enlarge x limits=0.15}, every axis plot/.append style={thick}}\titleformat{\chapter}{\Large\bfseries}{\thechapter.}{0.5em}{}\titlespacing*{\chapter}{0pt}{0pt}{20pt}\titleformat{\section}{\Large\bfseries}{\thesection.}{0.5em}{}\titlespacing*{\section}{0pt}{20pt}{10pt}\titleformat{\subsection}{\large\bfseries}{\thesubsection.}{0.5em}{}\titlespacing*{\subsection}{0pt}{15pt}{5pt}\pagestyle{plain}' `
         --from markdown+tex_math_single_backslash+tex_math_dollars+raw_tex `
-        --syntax-highlighting=tango
+        --highlight-style=tango
 
     if ($LASTEXITCODE -eq 0) {
         $file = Get-Item "$scriptDir/SkillMismatch_Report.pdf"

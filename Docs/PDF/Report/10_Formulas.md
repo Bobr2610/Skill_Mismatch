@@ -82,6 +82,30 @@ $$z = \frac{X - \mu}{\sigma}$$
 
 ## 10.3. Командная оценка
 
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+	width=0.92\linewidth,
+	height=6cm,
+	domain=-3.5:3.5,
+	samples=120,
+	xlabel={$z$},
+	ylabel={Плотность},
+	xmin=-3.5,
+	xmax=3.5,
+	ymin=0,
+	ymax=0.45,
+	axis lines=left,
+	grid=both
+]
+\addplot[thick, color=blue!70!black] {1/sqrt(2*pi)*exp(-x^2/2)};
+\addplot[fill=red!40!white, draw=none, domain=-3.5:-1.5, samples=50] {1/sqrt(2*pi)*exp(-x^2/2)} \closedcycle;
+\end{axis}
+\end{tikzpicture}
+\caption{Иллюстрация z-score: значение $z=-1{,}5$ лежит в левом хвосте распределения}
+\end{figure}
+
 ### 10.3.1. Командная производительность с коррекцией на качество
 
 $$P_{\text{team}} = \frac{E_{\text{completed}} - E_{\text{defective}}}{N_{\text{total}}}$$
@@ -301,3 +325,4 @@ $$\text{Cost}_{\text{turnover}} = N_{\text{separations}} \times \overline{C}_{\t
 *Таким образом, представленный аппарат — от фундаментальной формулы $W = E/N$ до сценарной матрицы 10.8 — образует замкнутую методологическую базу, достаточную для практической диагностики Skill Mismatch. Ключевое утверждение раздела: выявление несоответствия компетенций — не задача выбора «лучшей» формулы, а задача корректного сопоставления цели, контекста и набора взаимодополняющих метрик с нормативными порогами, калиброванными под отрасль.*
 
 \newpage
+
